@@ -216,13 +216,15 @@ def await_console_ok(timeout: int = 300, quiet: bool = False):
     await_http_ok("service/skupper", "https://{}:8010/", user="admin", password=password, timeout=timeout, quiet=quiet)
 
 
-def await_port(port: int, host: str = "localhost", timeout: int = 300, quiet: bool = False):
+def await_port(port: int, host: str = "localhost", timeout: int = 60, quiet: bool = False):
     """Wait for a TCP port to accept connections.
+
+    Uses exponential backoff retry strategy matching original Skewer behavior.
 
     Args:
         port: Port number
         host: Hostname or IP (default: localhost)
-        timeout: Timeout in seconds
+        timeout: Timeout in seconds (default: 60)
         quiet: If True, suppress progress messages
 
     Raises:
@@ -231,22 +233,21 @@ def await_port(port: int, host: str = "localhost", timeout: int = 300, quiet: bo
     import socket
 
     start_time = time.time()
+    period = 0.03125  # Start with ~30ms, exponential backoff
+
+    utils.info("Waiting for port {} on {}", port, host, quiet=quiet)
 
     while True:
-        utils.info("Waiting for port {} on {}", port, host, quiet=quiet)
-
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(5)
+            sock.settimeout(1)
             sock.connect((host, port))
             sock.close()
-            # Port is open - give app time to fully initialize before health checks
-            # Port-forward may accept connections before the app is ready to serve
-            utils.info("Port {} is open, waiting 15s for application to stabilize...", port, quiet=quiet)
-            time.sleep(15)
+            utils.info("Port {} is open", port, quiet=quiet)
             break
         except (socket.error, OSError):
             if time.time() - start_time > timeout:
                 raise SketcherTimeout(f"Timed out waiting for port {port} on {host}")
 
-            time.sleep(5)
+            time.sleep(period)
+            period = min(1, period * 2)  # Exponential backoff, max 1s

@@ -480,22 +480,61 @@ def stop_process(proc: subprocess.Popen, timeout: int = 5):
 # Temporary Files
 # ==============================================================================
 
-def make_temp_dir() -> str:
-    """Create temporary directory (replaces plano.make_temp_dir)."""
-    return tempfile.mkdtemp()
+def make_temp_dir(
+    prefix: Optional[str] = None,
+    suffix: Optional[str] = None,
+    parent: Optional[Union[str, Path]] = None
+) -> str:
+    """Create temporary directory (replaces plano.make_temp_dir).
+
+    Args:
+        prefix: Optional prefix for directory name
+        suffix: Optional suffix for directory name
+        parent: Optional parent directory (defaults to system temp)
+
+    Returns:
+        Path to created temporary directory
+    """
+    return tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=parent)
 
 
-def make_temp_file() -> str:
-    """Create temporary file (replaces plano.make_temp_file)."""
-    fd, path = tempfile.mkstemp()
+def make_temp_file(
+    prefix: Optional[str] = None,
+    suffix: Optional[str] = None,
+    parent: Optional[Union[str, Path]] = None
+) -> str:
+    """Create temporary file (replaces plano.make_temp_file).
+
+    Args:
+        prefix: Optional prefix for file name
+        suffix: Optional suffix for file name
+        parent: Optional parent directory (defaults to system temp)
+
+    Returns:
+        Path to created temporary file
+    """
+    fd, path = tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=parent)
     os.close(fd)
     return path
 
 
 @contextmanager
-def temp_dir():
-    """Context manager for temporary directory."""
-    dir_path = make_temp_dir()
+def temp_dir(
+    prefix: Optional[str] = None,
+    suffix: Optional[str] = None,
+    parent: Optional[Union[str, Path]] = None
+):
+    """Context manager for temporary directory.
+
+    Args:
+        prefix: Optional prefix for directory name
+        suffix: Optional suffix for directory name
+        parent: Optional parent directory (defaults to system temp)
+
+    Yields:
+        Path to temporary directory
+    """
+    dir_path = make_temp_dir(prefix=prefix, suffix=suffix, parent=parent)
     try:
         yield dir_path
     finally:
@@ -503,9 +542,22 @@ def temp_dir():
 
 
 @contextmanager
-def temp_file():
-    """Context manager for temporary file."""
-    file_path = make_temp_file()
+def temp_file(
+    prefix: Optional[str] = None,
+    suffix: Optional[str] = None,
+    parent: Optional[Union[str, Path]] = None
+):
+    """Context manager for temporary file.
+
+    Args:
+        prefix: Optional prefix for file name
+        suffix: Optional suffix for file name
+        parent: Optional parent directory (defaults to system temp)
+
+    Yields:
+        Path to temporary file
+    """
+    file_path = make_temp_file(prefix=prefix, suffix=suffix, parent=parent)
     try:
         yield file_path
     finally:
@@ -513,6 +565,74 @@ def temp_file():
             os.unlink(file_path)
         except OSError:
             pass
+
+
+def get_system_temp_dir() -> str:
+    """Get system temporary directory using stdlib.
+
+    Returns:
+        Path to system temporary directory
+    """
+    return tempfile.gettempdir()
+
+
+def get_user_temp_dir() -> str:
+    """Get user-specific temporary directory.
+
+    Returns a user-scoped temporary directory for general working files.
+    Falls back to <system-temp-dir>/<username>.
+
+    Note: Does not use XDG_RUNTIME_DIR as it's meant for short-lived runtime
+    state (sockets, PID files), is often noexec/size-limited, and may be
+    cleared on logout/reboot.
+
+    Returns:
+        Path to user temporary directory
+    """
+    import getpass
+    system_temp = get_system_temp_dir()
+    username = getpass.getuser()
+    user_temp = os.path.join(system_temp, username)
+    os.makedirs(user_temp, exist_ok=True)
+    return user_temp
+
+
+def get_project_work_dir(project_name: str, reset: bool = False) -> str:
+    """Get project-specific working directory.
+
+    Creates a working directory for the named project under the user temp
+    directory. The destructive reset behavior is opt-in via the reset parameter.
+
+    Args:
+        project_name: Name of the project (e.g., 'sketcher')
+        reset: If True, remove and recreate the directory. Only removes if the
+               directory appears to be under the expected user temp path to
+               avoid accidentally deleting unrelated data.
+
+    Returns:
+        Path to project working directory
+
+    Raises:
+        SketcherError: If reset=True but directory is not under user temp dir
+    """
+    user_temp = get_user_temp_dir()
+    work_dir = os.path.join(user_temp, project_name)
+
+    if reset and os.path.exists(work_dir):
+        # Safety check: only remove if under user temp dir
+        user_temp_resolved = os.path.realpath(user_temp)
+        work_dir_resolved = os.path.realpath(work_dir)
+
+        if not work_dir_resolved.startswith(user_temp_resolved + os.sep):
+            raise SketcherError(
+                f"Refusing to reset directory outside user temp: {work_dir}"
+            )
+
+        import shutil
+        shutil.rmtree(work_dir, ignore_errors=True)
+
+    os.makedirs(work_dir, exist_ok=True)
+    return work_dir
 
 
 # ==============================================================================

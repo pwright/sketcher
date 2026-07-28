@@ -208,6 +208,10 @@ def main():
     else:
         utils.configure_logging(level=logging.INFO)
 
+    # Print version at start of every run
+    from . import __version__
+    print(f"Sketcher {__version__}")
+
     # Extract quiet flag for passing to commands
     quiet = getattr(args, 'quiet', False)
 

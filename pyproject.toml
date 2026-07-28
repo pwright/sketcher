@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sketcher"
-version = "0.1.0"
+version = "0.1.1"  # TODO (Nov 2026): After dropping Python 3.10, make this single source of truth using tomllib
 description = "Python 3 native framework for documenting and testing Skupper examples"
 readme = "README.md"
 requires-python = ">=3.9"

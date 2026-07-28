@@ -71,6 +71,11 @@ python -m sketcher demo skewer.yaml
 
 # Run full automated test (no pause)
 python -m sketcher test skewer.yaml
+
+# Debugging flags (works with demo, run, test commands)
+python -m sketcher demo skewer.yaml --verbose  # Show debug output (what's executing)
+python -m sketcher demo skewer.yaml --debug    # Show debug output on failure
+python -m sketcher demo skewer.yaml --quiet    # Suppress progress messages
 ```
 
 ## Sketcher YAML

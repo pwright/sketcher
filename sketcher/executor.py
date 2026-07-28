@@ -129,23 +129,29 @@ def run_step(model: Model, step, work_dir: str, check: bool = True, quiet: bool 
 
                     # Execute await operations
                     if command.await_resource:
+                        utils.debug(f"Awaiting resource: {command.await_resource}")
                         kubernetes.await_resource(command.await_resource, quiet=quiet)
 
                     if command.await_ingress:
+                        utils.debug(f"Awaiting ingress: {command.await_ingress}")
                         kubernetes.await_ingress(command.await_ingress, quiet=quiet)
 
                     if command.await_http_ok:
                         # await_http_ok is a tuple: (service, url_template, user, password)
+                        utils.debug(f"Awaiting HTTP OK: {command.await_http_ok[0]}")
                         kubernetes.await_http_ok(*command.await_http_ok, quiet=quiet)
 
                     if command.await_console_ok:
+                        utils.debug("Awaiting console OK")
                         kubernetes.await_console_ok(quiet=quiet)
 
                     if command.await_port:
+                        utils.debug(f"Awaiting port: {command.await_port}")
                         kubernetes.await_port(command.await_port, quiet=quiet)
 
                     # Execute shell command
                     if command.run:
+                        utils.debug(f"Running: {command.run}")
                         # Replace ~ with work_dir
                         cmd = command.run.replace("~", work_dir)
 

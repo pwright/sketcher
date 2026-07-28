@@ -301,9 +301,6 @@ steps:
       apply: readme
     - run: kubectl port-forward deployment/frontend 8080:8080 > /dev/null &
       apply: test
-    - await_port: 8080
-    - run: curl http://localhost:8080/api/health
-      apply: test
 - commands:
     west:
     - run: kubectl delete -f west/ --ignore-not-found

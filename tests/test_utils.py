@@ -160,6 +160,153 @@ class TestTemporaryFiles(unittest.TestCase):
         # File should be cleaned up
         self.assertFalse(os.path.exists(temp_path))
 
+    def test_make_temp_dir_with_prefix(self):
+        """Test temporary directory creation with prefix."""
+        temp_dir = utils.make_temp_dir(prefix="test-")
+        self.assertTrue(os.path.isdir(temp_dir))
+        self.assertIn("test-", os.path.basename(temp_dir))
+        os.rmdir(temp_dir)
+
+    def test_make_temp_dir_with_suffix(self):
+        """Test temporary directory creation with suffix."""
+        temp_dir = utils.make_temp_dir(suffix="-end")
+        self.assertTrue(os.path.isdir(temp_dir))
+        self.assertTrue(os.path.basename(temp_dir).endswith("-end"))
+        os.rmdir(temp_dir)
+
+    def test_make_temp_dir_with_parent(self):
+        """Test temporary directory creation with parent directory."""
+        parent = tempfile.mkdtemp()
+        try:
+            temp_dir = utils.make_temp_dir(parent=parent)
+            self.assertTrue(os.path.isdir(temp_dir))
+            self.assertEqual(os.path.dirname(temp_dir), parent)
+            os.rmdir(temp_dir)
+        finally:
+            os.rmdir(parent)
+
+    def test_make_temp_file_with_prefix(self):
+        """Test temporary file creation with prefix."""
+        temp_file = utils.make_temp_file(prefix="test-")
+        self.assertTrue(os.path.isfile(temp_file))
+        self.assertIn("test-", os.path.basename(temp_file))
+        os.unlink(temp_file)
+
+    def test_make_temp_file_with_suffix(self):
+        """Test temporary file creation with suffix."""
+        temp_file = utils.make_temp_file(suffix=".txt")
+        self.assertTrue(os.path.isfile(temp_file))
+        self.assertTrue(temp_file.endswith(".txt"))
+        os.unlink(temp_file)
+
+    def test_make_temp_file_with_parent(self):
+        """Test temporary file creation with parent directory."""
+        parent = tempfile.mkdtemp()
+        try:
+            temp_file = utils.make_temp_file(parent=parent)
+            self.assertTrue(os.path.isfile(temp_file))
+            self.assertEqual(os.path.dirname(temp_file), parent)
+            os.unlink(temp_file)
+        finally:
+            os.rmdir(parent)
+
+    def test_temp_dir_context_with_params(self):
+        """Test temporary directory context manager with parameters."""
+        with utils.temp_dir(prefix="test-", suffix="-end") as temp_path:
+            self.assertTrue(os.path.isdir(temp_path))
+            self.assertIn("test-", os.path.basename(temp_path))
+            self.assertTrue(os.path.basename(temp_path).endswith("-end"))
+
+        # Directory should be cleaned up
+        self.assertFalse(os.path.exists(temp_path))
+
+    def test_temp_file_context_with_params(self):
+        """Test temporary file context manager with parameters."""
+        with utils.temp_file(prefix="test-", suffix=".txt") as temp_path:
+            self.assertTrue(os.path.isfile(temp_path))
+            self.assertIn("test-", os.path.basename(temp_path))
+            self.assertTrue(temp_path.endswith(".txt"))
+
+        # File should be cleaned up
+        self.assertFalse(os.path.exists(temp_path))
+
+    def test_get_system_temp_dir(self):
+        """Test get_system_temp_dir returns valid directory."""
+        temp_dir = utils.get_system_temp_dir()
+        self.assertTrue(os.path.isdir(temp_dir))
+        self.assertEqual(temp_dir, tempfile.gettempdir())
+
+    def test_get_user_temp_dir(self):
+        """Test get_user_temp_dir creates user-specific directory."""
+        import getpass
+        user_temp = utils.get_user_temp_dir()
+        self.assertTrue(os.path.isdir(user_temp))
+        self.assertIn(getpass.getuser(), user_temp)
+
+    def test_get_project_work_dir(self):
+        """Test get_project_work_dir creates project directory."""
+        work_dir = utils.get_project_work_dir("test-project")
+        self.assertTrue(os.path.isdir(work_dir))
+        self.assertIn("test-project", work_dir)
+        # Cleanup
+        import shutil
+        shutil.rmtree(work_dir, ignore_errors=True)
+
+    def test_get_project_work_dir_with_reset(self):
+        """Test get_project_work_dir with reset removes and recreates."""
+        # Create initial directory with a test file
+        work_dir = utils.get_project_work_dir("test-reset-project")
+        test_file = Path(work_dir) / "test.txt"
+        test_file.write_text("content")
+        self.assertTrue(test_file.exists())
+
+        # Reset should remove and recreate
+        work_dir_reset = utils.get_project_work_dir("test-reset-project", reset=True)
+        self.assertEqual(work_dir, work_dir_reset)
+        self.assertTrue(os.path.isdir(work_dir_reset))
+        self.assertFalse(test_file.exists())
+
+        # Cleanup
+        import shutil
+        shutil.rmtree(work_dir_reset, ignore_errors=True)
+
+    def test_get_project_work_dir_reset_safety(self):
+        """Test get_project_work_dir refuses to reset directory outside user temp."""
+        from sketcher.exceptions import SketcherError
+        import unittest.mock
+
+        # Create a real directory outside user temp
+        outside_dir = tempfile.mkdtemp()
+        try:
+            # Mock get_user_temp_dir to return a different location
+            fake_user_temp = tempfile.mkdtemp()
+            try:
+                with unittest.mock.patch('sketcher.utils.get_user_temp_dir', return_value=fake_user_temp):
+                    # Try to reset the outside directory using reset=True
+                    # This should fail because outside_dir is not under fake_user_temp
+                    with unittest.mock.patch('sketcher.utils.os.path.exists', return_value=True):
+                        with unittest.mock.patch('sketcher.utils.os.path.realpath') as mock_realpath:
+                            # Make the work dir resolve to outside_dir, user_temp to fake_user_temp
+                            def realpath_side_effect(path):
+                                if "test-safety" in str(path):
+                                    return outside_dir
+                                elif path == fake_user_temp:
+                                    return fake_user_temp
+                                else:
+                                    return os.path.realpath(path)
+
+                            mock_realpath.side_effect = realpath_side_effect
+
+                            # This should raise SketcherError
+                            with self.assertRaises(SketcherError) as cm:
+                                utils.get_project_work_dir("test-safety", reset=True)
+
+                            self.assertIn("Refusing to reset directory", str(cm.exception))
+            finally:
+                os.rmdir(fake_user_temp)
+        finally:
+            os.rmdir(outside_dir)
+
 
 class TestEnvironment(unittest.TestCase):
     """Test environment functions."""
