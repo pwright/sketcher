@@ -1,0 +1,507 @@
+title: Redis Multicloud High Availability using Skupper
+subtitle: Secure Redis servers across multiple distributed Kubernetes clusters
+workflow: null
+overview: "This example deploys a simple highly available Redis architecture with\n\
+  Sentinel across multiple Kubernetes clusters using Skupper.\n\nIn addition to the\
+  \ Redis Server and Sentinel, the example contains\nan additional service:\n\n* A\
+  \ wiki-getter service that exposes an `/api/search?query=` endpoint. \n  The server\
+  \ returns the result from the Redis cache if present otherwise\n  it will retrieve\
+  \ the query via the `wiki api` and cache the content via\n  the Redis primary server.\n\
+  \nWith Skupper, you can place the Redis primary server in one cluster and \nthe\
+  \ replica servers in alternative clusters without requiring that\nthe servers be\
+  \ exposed to the public internet.\n\n**Note:** This example is intended for the\
+  \ Skupper v2 version. The\nexample for use with the v1 version can be found [here][v1-example]:\n\
+  \n[v1-example]: https://github.com/skupperproject/skupper-example-redis/blob/v1/README.md\n"
+prerequisites: null
+sites:
+  west:
+    title: West
+    platform: kubernetes
+    namespace: west
+    env:
+      KUBECONFIG: ~/.kube/config-west
+  east:
+    title: East
+    platform: kubernetes
+    namespace: east
+    env:
+      KUBECONFIG: ~/.kube/config-east
+  north:
+    title: North
+    platform: kubernetes
+    namespace: north
+    env:
+      KUBECONFIG: ~/.kube/config-north
+  podman-west:
+    title: Podman West
+    platform: podman
+    env:
+      SKUPPER_PLATFORM: podman
+steps:
+- title: Install the Skupper command-line tool
+  numbered: true
+  preamble: 'This example uses the Skupper command-line tool to create Skupper
+
+    resources.  You need to install the `skupper` command only once
+
+    for each development environment.
+
+
+    On Linux or Mac, you can use the install script (inspect it
+
+    [here][install-script]) to download and extract the command:
+
+
+    ~~~ shell
+
+    curl https://skupper.io/v2/install.sh | sh
+
+    ~~~
+
+
+    The script installs the command under your home directory.  It
+
+    prompts you to add the command to your path if necessary.
+
+
+    For Windows and other installation options, see [Installing
+
+    Skupper][install-docs].
+
+
+    [install-script]: https://github.com/skupperproject/skupper-website/blob/main/input/install.sh
+
+    [install-docs]: https://skupper.io/#installation'
+- title: Access your Kubernetes cluster
+  numbered: true
+  preamble: Open a new terminal window and log in to your cluster.
+  postamble: '**Note:** The login procedure varies by provider.'
+  commands:
+    west:
+    - run: <provider-specific login command>
+      apply: readme
+    east:
+    - run: <provider-specific login command>
+      apply: readme
+    north:
+    - run: <provider-specific login command>
+      apply: readme
+- title: Set up your Podman environment
+  numbered: true
+  preamble: 'Open a new terminal window and set the `SKUPPER_PLATFORM`
+
+    environment variable to `podman`.  This sets the Skupper platform
+
+    to Podman for this terminal session.
+
+
+    The `skupper system install` enables the Podman API
+
+    service (using systemctl) if that service is not already running.
+
+    The `skupper system install` command also creates the
+
+    Skupper controller container for the current user.'
+  postamble: 'If `skupper system install` fails, it is typically due to a systemctl
+    issue. You can try the `podman
+
+    system service` command instead:
+
+
+    ~~~
+
+    podman system service --time 0 unix://$XDG_RUNTIME_DIR/podman/podman.sock &
+
+    ~~~'
+  commands:
+    podman-west:
+    - run: export SKUPPER_PLATFORM=podman
+    - run: skupper system install
+- title: Install the Skupper controller
+  commands:
+    west:
+    - run: kubectl kustomize https://github.com/skupperproject/skupper/config/default/cluster/
+        | kubectl apply -f -
+- title: Create your sites
+  preamble: "A Skupper _site_ is a location where components of your\napplication\
+    \ are running.  Sites are linked together to form a\nSkupper network for your\
+    \ application.\n\nUse the `kubectl apply` command to declaratively create sites\n\
+    in the kubernetes namespaces. This deploys the Skupper router. \nThen use `kubectl\
+    \ get site` to see the outcome.\n\n**Note:** If you are using Minikube, you need\
+    \ to [start minikube\ntunnel][minikube-tunnel] before you run `kubectl apply`.\n\
+    \n[minikube-tunnel]: https://skupper.io/start/minikube.html#running-minikube-tunnel\n"
+  commands:
+    west:
+    - run: kubectl apply -f ./west-crs/site-west.yaml
+    - run: kubectl wait --for condition=Ready --timeout=60s site/west
+    east:
+    - run: kubectl apply -f ./east-crs/site-east.yaml
+    - run: kubectl wait --for condition=Ready --timeout=60s site/east
+    north:
+    - run: kubectl apply -f ./north-crs/site-north.yaml
+    - run: kubectl wait --for condition=Ready --timeout=60s site/north
+  postamble: 'As you move through the steps below, you can use `kubectl get` at
+
+    any time on a resource to check your progress.
+
+    '
+- title: Deploy Redis Server and Sentinel
+  preamble: 'A _yaml_ file defines the resources for the Redis deployment in each
+
+    site. Each contains:
+
+
+    - A Server deployment resource
+
+    - A Sentinel deployment resource
+
+    - A Redis config map for configuration
+
+
+    ** Note ** the `redis-north.yaml` file designates the server to be
+
+    primary while the other sites are designated as replica sites to north.
+
+    '
+  commands:
+    west:
+    - run: kubectl apply -f ./west-crs/redis-west.yaml
+    east:
+    - run: kubectl apply -f ./east-crs/redis-east.yaml
+    north:
+    - run: kubectl apply -f ./north-crs/redis-north.yaml
+  postamble: '** Note ** the Sentinel deployments in each site use an init container
+
+    that waits for the service definitions of the Redis servers in all
+
+    sites to exist before execution. This will be satisfied by the next
+
+    step.
+
+    '
+- title: Expose Redis Server and Sentinel to Application Network
+  preamble: "We will create links and connectors in the sites to expose the server\
+    \ and \nsentinel deployments in each namespace\n"
+  commands:
+    west:
+    - await_resource: deployment/redis-server
+    - run: kubectl apply -f ./west-crs/listener-west.yaml
+    - run: kubectl apply -f ./west-crs/connector-west.yaml
+    east:
+    - await_resource: deployment/redis-server
+    - run: kubectl apply -f ./east-crs/listener-east.yaml
+    - run: kubectl apply -f ./east-crs/connector-east.yaml
+    north:
+    - await_resource: deployment/redis-server
+    - run: kubectl apply -f ./north-crs/listener-north.yaml
+    - run: kubectl apply -f ./north-crs/connector-north.yaml
+- title: Create podman site resource definitions
+  preamble: 'A podman site will attach to the kubernetes west site to enable
+
+    the redis cli to access the server and sentinel deployments. This
+
+    will be enabled by defining a site resource and the collection of
+
+    listener resources that will map host and ports onto the services
+
+    provided on the kubernetes clusters.
+
+
+    The resources will be input in the default namespace location
+
+    for the current user:
+
+
+    `~/.local/share/skupper/namespaces/default/input/resources/`
+
+    '
+  commands:
+    podman-west:
+    - run: ./podman-crs/setup-resources.sh
+- title: Link your sites
+  preamble: 'A Skupper _link_ is a channel for communication between two sites.
+
+    Links serve as a transport for application connections.
+
+
+    Creating a link requires use of a `skupper token issue` command to generate
+
+    an access token resource (with details and a secret token) and then activating
+
+    the link via `skupper token redeem` in the appropriate namespaces.
+
+    '
+  commands:
+    west:
+    - run: skupper token issue ~/link-to-west.yaml --redemptions-allowed 2
+    - run: skupper token issue ~/.local/share/skupper/namespaces/default/input/resources/link-to-west.yaml
+    east:
+    - run: skupper token issue ~/link-to-east.yaml
+    - run: skupper token redeem ~/link-to-west.yaml
+    north:
+    - run: skupper token redeem ~/link-to-west.yaml
+    - run: skupper token redeem ~/link-to-east.yaml
+- title: Create Podman site
+  preamble: 'The skupper cli can be used to create a podman (non-kube) site
+
+    that instatiates the set of resources in the
+
+    `~/.local/share/skupper/namespaces/default/input/resources` directory.
+
+    '
+  commands:
+    podman-west:
+    - run: skupper system setup --path ~/.local/share/skupper/namespaces/default/input/resources
+- title: Use Redis command line interface to verify master status
+  preamble: 'Running the `redis-cli` from the podman-west site, attach to the Redis
+    server
+
+    and Sentinel to verfy that the redis-server-north is master.
+
+    '
+  commands:
+    podman-west:
+    - run: redis-cli -p 6379
+    - run: 127.0.0.1:6379> ROLE
+      output: "1) \"master\"\n2) (integer) 1531796\n3) 1) 1) \"redis-server-west\"\
+        \n      2) \"6379\"\n      3) \"1531796\"\n   2) 1) \"redis-server-east\"\n\
+        \      2) \"6379\"\n      3) \"1531796\"\n"
+    - run: 127.0.0.1:6379> exit
+    - run: redis-cli -p 26379
+    - run: 127.0.0.1:26379> sentinel get-master-addr-by-name redis-skupper
+      output: '1) "redis-server-north"
+
+        2) "6379"
+
+        '
+    - run: 127.0.0.1:26379> exit
+- title: Deploy the wiki-getter service
+  preamble: "We will choose the north namespace to create a wiki-getter deployment\n\
+    and service. The client in the service will determine the \nSentinel service to\
+    \ access the current Redis primary server\nfor query and cache updates.\n"
+  commands:
+    north:
+    - run: kubectl apply -f wiki-getter.yaml
+      output: 'deployment.apps/wiki-getter created
+
+        service/wiki-getter created
+
+        '
+- title: Get Wiki content
+  preamble: "Use `curl` to send a request to querty the Wikipedia API via the \nwiki-getter\
+    \ service. Note the *X-Response-Time* header for the initial\nquery. The application\
+    \ will check the redis cache and if not found\nwill fetch from the external Wikipedia\
+    \ API. If the content has been \nstored, the applications will provide the response\
+    \ directly.\n"
+  commands:
+    north:
+    - run: kubectl exec -it deployment/wiki-getter -- curl -f -I --head http://wiki-getter:8080/api/search?query=Boston
+      output: 'HTTP/1.1 200 OK
+
+        X-Powered-By: Express
+
+        Content-Type: application/json; charset=utf-8
+
+        Content-Length: 132099
+
+        ETag: W/"20403-PfBW245Yreh1Gm27jHeiM01Wox8"
+
+        X-Response-Time: 1545.706ms
+
+        Date: Fri, 29 Mar 2024 12:48:53 GMT
+
+        Connection: keep-alive
+
+        Keep-Alive: timeout=5
+
+        '
+    - run: kubectl exec -it deployment/wiki-getter -- curl -f -I --head http://wiki-getter:8080/api/search?query=Boston
+      output: 'HTTP/1.1 200 OK
+
+        X-Powered-By: Express
+
+        Content-Type: application/json; charset=utf-8
+
+        Content-Length: 132097
+
+        ETag: W/"20401-7u+hiY6DPz+D2DHbukm0QE/L82s"
+
+        X-Response-Time: 5.847ms
+
+        Date: Fri, 29 Mar 2024 12:48:58 GMT
+
+        Connection: keep-alive
+
+        Keep-Alive: timeout=5
+
+        '
+- title: Force Sentinel failover
+  preamble: 'Using the Sentinel command, force a failover as if the master was not
+    reachable. This
+
+    will result in the promotion of one of the slave Redis servers to master role.
+
+    '
+  commands:
+    podman-west:
+    - run: redis-cli -p 26379
+    - run: 127.0.0.1:26379> sentinel failover redis-skupper
+      output: 'OK
+
+        (0.66s)
+
+        '
+    - run: 127.0.0.1:26379> sentinel get-master-addr-by-name redis-skupper
+      output: '1) "redis-server-west"
+
+        2) "6379"
+
+        '
+    - run: 127.0.0.1:26379> exit
+  postamble: 'Note that `redis-server-east` may have alternatively been elected master
+    role.
+
+    '
+- title: Verify Wiki content
+  preamble: 'Check that cached content is correctly returned from new master.
+
+    '
+  commands:
+    north:
+    - run: kubectl exec -it deployment/wiki-getter -- curl -f -I --head http://wiki-getter:8080/api/search?query=Boston
+      output: 'HTTP/1.1 200 OK
+
+        X-Powered-By: Express
+
+        Content-Type: application/json; charset=utf-8
+
+        Content-Length: 132097
+
+        ETag: W/"20401-7u+hiY6DPz+D2DHbukm0QE/L82s"
+
+        X-Response-Time: 152.056ms
+
+        Date: Fri, 29 Mar 2024 12:50:45 GMT
+
+        Connection: keep-alive
+
+        Keep-Alive: timeout=5
+
+        '
+- title: Use Redis command line to measure latency of servers from each site
+  preamble: "To understand latency in a true multicloud scenario, the redis-cli can\
+    \ be used to\nmeasure the latency of a Redis server in milliseconds from any application\
+    \ network\nsite. \n"
+  commands:
+    west:
+    - run: kubectl exec -it deployment/redis-server -- redis-cli --latency -h redis-server-west
+        -p 6379 --raw
+      output: '0 10 1.41 88
+
+        '
+    - run: kubectl exec -it deployment/redis-server -- redis-cli --latency -h redis-server-east
+        -p 6379 --raw
+      output: '76 254 96.40 10
+
+        '
+    - run: kubectl exec -it deployment/redis-server -- redis-cli --latency -h redis-server-north
+        -p 6379 --raw
+      output: '33 104 44.00 19
+
+        '
+    east:
+    - run: kubectl exec -it deployment/redis-server -- redis-cli --latency -h redis-server-west
+        -p 6379 --raw
+      output: '79 110 85.45 11
+
+        '
+    - run: kubectl exec -it deployment/redis-server -- redis-cli --latency -h redis-server-east
+        -p 6379 --raw
+      output: '0 26 1.28 89
+
+        '
+    - run: kubectl exec -it deployment/redis-server -- redis-cli --latency -h redis-server-north
+        -p 6379 --raw
+      output: '113 358 149.14 7
+
+        '
+    north:
+    - run: kubectl exec -it deployment/redis-server -- redis-cli --latency -h redis-server-west
+        -p 6379 --raw
+      output: '33 103 38.71 21
+
+        '
+    - run: kubectl exec -it deployment/redis-server -- redis-cli --latency -h redis-server-east
+        -p 6379 --raw
+      output: '115 161 125.25 8
+
+        '
+    - run: kubectl exec -it deployment/redis-server -- redis-cli --latency -h redis-server-north
+        -p 6379 --raw
+      output: '0 19 0.88 94
+
+        '
+    podman-west:
+    - run: redis-cli --latency -p 6379 --raw
+      output: '62 88 68.85 13
+
+        '
+    - run: redis-cli --latency -p 6380 --raw
+      output: '28 38 32.88 24
+
+        '
+    - run: redis-cli --latency -p 6381 --raw
+      output: '110 280 141.43 7
+
+        '
+  postamble: 'The sample period output is latency min, max, average over the number
+    of samples. Note, that the sample
+
+    outputs provided are actual measures across three public cloud locations (Washington
+    DC, London, and Dallas)
+
+    '
+- title: Cleaning up
+  preamble: 'To remove Skupper and other resource from this exercise, use the
+
+    following commands.
+
+    '
+  commands:
+    west:
+    - run: kubectl delete ns west
+    east:
+    - run: kubectl delete ns east
+    north:
+    - run: kubectl delete ns north
+    podman-west:
+    - run: skupper system teardown
+summary: 'This example locates the Redis Server and Sentinel services in different
+
+  namespaces, on different clusters.  Ordinarily, this means that they
+
+  have no way to communicate unless they are exposed to the public
+
+  internet.
+
+
+  Introducing Skupper into each namespace allows us to create a virtual
+
+  application network that can connect Redis services in different clusters.
+
+  Any service exposed on the application network is represented as a
+
+  local service in all of the linked namespaces.
+
+
+  The Redis primary server is located in `north`, but the Redis replica
+
+  services in `west` and `east` can "see" it as if it were local.
+
+  Redis replica operations take place by service name and Skupper
+
+  forwards the requests to the namespace where the corresponding server
+
+  is running and routes the response back appropriately.
+
+  '

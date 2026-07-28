@@ -1,0 +1,6 @@
+__pycache__/
+/README.html
+/htmlcov
+/.coverage
+link.yaml
+.claude/

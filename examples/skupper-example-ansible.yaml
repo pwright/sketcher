@@ -1,0 +1,276 @@
+title: Skupper Hello World using Ansible
+subtitle: A minimal HTTP application deployed across Kubernetes clusters using Skupper
+overview: "This example is a variant of [Skupper Hello World][hello-world] that\n\
+  is deployed using the [Skupper Ansible collection][skupper-ansible].\n\nIt contains\
+  \ two services:\n\n* A backend service that exposes an `/api/hello` endpoint.  It\n\
+  \  returns greetings of the form `Hi, <your-name>.  I am <my-name>\n  (<pod-name>)`.\n\
+  \n* A frontend service that sends greetings to the backend and\n  fetches new greetings\
+  \ in response.\n\nIn this scenario, each service runs in a different Kubernetes\n\
+  cluster.  The frontend runs in a namespace on cluster 1 called West,\nand the backend\
+  \ runs in a namespace on cluster 2 called East.\n\n<img src=\"images/entities.svg\"\
+  \ width=\"640\"/>\n\nSkupper enables you to place the backend in one cluster and\
+  \ the\nfrontend in another and maintain connectivity between the two\nservices without\
+  \ exposing the backend to the public internet.\n\nThe [Skupper Ansible collection][skupper-ansible]\
+  \ is used in this example\nto connect two sites running on Kubernetes, but the collection\
+  \ can also be\nused to manage the lifecycle of sites running on Podman, Docker or\
+  \ Linux.\n\n[hello-world]: https://github.com/skupperproject/skupper-example-hello-world/tree/v2/\n\
+  [skupper-ansible]: https://galaxy.ansible.com/ui/repo/published/skupper/v2/\n"
+prerequisites: '@default@
+
+  * Ansible, version 2.15 or later ([installation guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html))
+
+  '
+sites:
+  west:
+    title: Terminal
+    platform: kubernetes
+    namespace: west
+    env:
+      KUBECONFIG: $PWD/ansible/kubeconfigs/west
+  east:
+    platform: kubernetes
+    namespace: east
+    env:
+      KUBECONFIG: $PWD/ansible/kubeconfigs/east
+steps:
+- title: Install the Skupper Ansible collection
+  preamble: 'Use the `ansible-galaxy` command to install the
+
+    `skupper.v2` collection.
+
+    '
+  commands:
+    west:
+    - run: 'ansible-galaxy collection install skupper.v2
+
+        '
+- title: Access your Kubernetes clusters
+  numbered: true
+  preamble: 'Skupper is designed for use with multiple Kubernetes clusters.
+
+    The `skupper` and `kubectl` commands use your
+
+    [kubeconfig][kubeconfig] and current context to select the cluster
+
+    and namespace where they operate.
+
+
+    [kubeconfig]: https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/
+
+
+    This example uses multiple cluster contexts at once. The
+
+    `KUBECONFIG` environment variable tells `skupper` and `kubectl`
+
+    which kubeconfig to use.
+
+
+    For each cluster, open a new terminal window.  In each terminal,
+
+    set the `KUBECONFIG` environment variable to a different path and
+
+    log in to your cluster.'
+  postamble: '**Note:** The login procedure varies by provider.'
+  commands:
+    west:
+    - run: export KUBECONFIG=$PWD/ansible/kubeconfigs/west
+    - run: <provider-specific login command>
+      apply: readme
+    east:
+    - run: export KUBECONFIG=$PWD/ansible/kubeconfigs/east
+    - run: <provider-specific login command>
+      apply: readme
+- title: Install Skupper on your Kubernetes clusters
+  numbered: true
+  preamble: 'Using Skupper on Kubernetes requires the installation of the
+
+    Skupper custom resource definitions (CRDs) and the Skupper
+
+    controller.
+
+
+    For each cluster, use `kubectl apply` with the Skupper
+
+    installation YAML to install the CRDs and controller.'
+  commands:
+    west:
+    - run: kubectl apply -f https://skupper.io/v2/install.yaml
+      apply: readme
+    - run: curl https://skupper.io/v2/install.yaml | sed s/Always/IfNotPresent/g |
+        kubectl apply -f -
+      apply: test
+    east:
+    - run: kubectl apply -f https://skupper.io/v2/install.yaml
+      apply: readme
+    - run: curl https://skupper.io/v2/install.yaml | sed s/Always/IfNotPresent/g |
+        kubectl apply -f -
+      apply: test
+- title: Set up your clusters
+  preamble: 'This example uses two clusters.  The clusters are accessed using
+
+    two kubeconfig files:
+
+
+    ~~~
+
+    <project-dir>/ansible/kubeconfigs/east
+
+    <project-dir>/ansible/kubeconfigs/west
+
+    ~~~
+
+
+    For each kubeconfig, set the `KUBECONFIG` environment variable
+
+    to the file path and run the login command for your cluster.
+
+    This updates the kubeconfig with the required credentials.
+
+
+    **Note:** The cluster login procedure varies by provider.  See
+
+    the documentation for yours:
+
+
+    * [Minikube](https://skupper.io/start/minikube.html#cluster-access)
+
+    * [Amazon Elastic Kubernetes Service (EKS)](https://skupper.io/start/eks.html#cluster-access)
+
+    * [Azure Kubernetes Service (AKS)](https://skupper.io/start/aks.html#cluster-access)
+
+    * [Google Kubernetes Engine (GKE)](https://skupper.io/start/gke.html#cluster-access)
+
+    * [IBM Kubernetes Service](https://skupper.io/start/ibmks.html#cluster-access)
+
+    * [OpenShift](https://skupper.io/start/openshift.html#cluster-access)
+
+    '
+  commands:
+    west:
+    - run: 'cd <project-dir>
+
+        export KUBECONFIG=$PWD/ansible/kubeconfigs/west
+
+        # Enter your provider-specific login command for cluster 1
+
+        export KUBECONFIG=$PWD/ansible/kubeconfigs/east
+
+        # Enter your provider-specific login command for cluster 2
+
+        '
+      apply: readme
+- title: Inspect the inventory file
+  preamble: "Before we start running commands, let's examine the inventory\nfile.\
+    \  Although it is not mandatory to have an inventory file, you can have\nthe kubeconfig\
+    \ file, the namespace and the path to the resources defined per\ninventory host.\n\
+    \n[ansible/inventory.yml](ansible/inventory.yml):\n\n~~~ yaml\nall:\n  vars:\n\
+    \    ansible_connection: local\n  hosts:\n    west:\n      kubeconfig: \"{{ inventory_dir\
+    \ }}/kubeconfigs/west\"\n      namespace: west\n      resources_path: \"{{ playbook_dir\
+    \ }}/kubernetes/west.yaml\"\n    east:\n      kubeconfig: \"{{ inventory_dir }}/kubeconfigs/east\"\
+    \n      namespace: east\n      resources_path: \"{{ playbook_dir }}/kubernetes/east.yaml\"\
+    \n~~~\n\nThe playbooks that follow use this inventory data to set up and\ntear\
+    \ down the Skupper network.\n\nFor more information about inventory files, see\
+    \ the [Ansible\ninventory guide][ansible-inventory].\n\n[ansible-inventory]: https://docs.ansible.com/ansible/latest/inventory_guide/index.html\n"
+- title: Run the setup playbook
+  preamble: "Now let's look at the setup playbook.\n\n[ansible/setup.yml](ansible/setup.yml):\n\
+    \n~~~ yaml\n- hosts: all\n  connection: local\n  tasks:\n    - name: Apply site\
+    \ resources\n      skupper.v2.resource:\n        path: \"{{ resources_path }}\"\
+    \n        kubeconfig: \"{{ kubeconfig }}\"\n        namespace: \"{{ namespace\
+    \ }}\"\n\n- hosts: west\n  connection: local\n  tasks:\n    - name: Create a token\
+    \ to the west site\n      skupper.v2.token:\n        name: \"west\"\n        kubeconfig:\
+    \ \"{{ kubeconfig }}\"\n        namespace: \"{{ namespace }}\"\n      register:\
+    \ accesstoken\n\n- hosts: east\n  connection: local\n  tasks:\n    - name: Link\
+    \ east site to west\n      skupper.v2.resource:\n        def: \"{{ hostvars['west']['accesstoken']['token']\
+    \ }}\"\n        kubeconfig: \"{{ kubeconfig }}\"\n        namespace: \"{{ namespace\
+    \ }}\"\n~~~\n\nThe first task applies all needed resources on both west and east\
+    \ namespaces.\nThose resources contain the whole example definition, including:\
+    \ the workloads (backend and frontend apps)\nalong with all the Skupper V2 resources\
+    \ needed.\nWe apply those resources using the `skupper.v2.resource` module, see\
+    \ the\n[Resource module documentation][resource-doc].\n\nThe second task is performed\
+    \ against the west inventory host only and it generates\nan AccessGrant named\
+    \ `west`, returning its respective AccessToken, which is registered\nto the host\
+    \ variable `accesstoken`. This task uses the `skupper.v2.token` module for that,\
+    \ see\nthe [Token module documentation][token-doc].\n\nThe last task is to link\
+    \ the east site to the west, using the `skupper.v2.resource` module again,\nand\
+    \ applying the AccessToken registered into the west host variables as `accesstoken.token`.\n\
+    \nUse the `ansible-playbook` command to run the playbook:\n\n[resource-doc]: https://galaxy.ansible.com/ui/repo/published/skupper/v2/content/module/resource/\n\
+    [token-doc]: https://galaxy.ansible.com/ui/repo/published/skupper/v2/content/module/token/\n"
+  postamble: '**Note:** The collection also requires some Python modules to be present
+
+    on the target node, in case you have problems, you will need to install
+
+    the [collection requirements][collection-requirements], in example:
+
+
+    ~~~
+
+    pip install -r https://raw.githubusercontent.com/skupperproject/skupper-ansible/refs/heads/main/requirements.txt
+
+    ~~~
+
+
+    [collection-requirements]: https://raw.githubusercontent.com/skupperproject/skupper-ansible/refs/heads/main/requirements.txt
+
+    '
+  commands:
+    west:
+    - run: pip install -r https://raw.githubusercontent.com/skupperproject/skupper-ansible/refs/heads/main/requirements.txt
+      apply: test
+    - run: ansible-playbook -i ansible/inventory.yml ansible/setup.yml
+      output: '[...]
+
+        PLAY RECAP *********************************************************************************************
+
+        east             : ok=4    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+
+        west             : ok=4    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+
+        '
+- commands:
+    west:
+    - run: export KUBECONFIG=$PWD/ansible/kubeconfigs/west
+      apply: readme
+    - await_resource: deployment/frontend
+    - run: kubectl -n west port-forward deployment/frontend 8080:8080
+      apply: readme
+    - run: kubectl -n west port-forward deployment/frontend 8080:8080 > /dev/null
+        &
+      apply: test
+    - await_port: 8080
+    - run: curl http://localhost:8080/api/health
+      apply: test
+  title: Access the frontend service
+  numbered: true
+  preamble: 'In order to use and test the application, we need external access
+
+    to the frontend.
+
+
+    Use `kubectl port-forward` to make the frontend available at
+
+    `localhost:8080`.'
+  postamble: 'You can now access the web interface by navigating to
+
+    [http://localhost:8080](http://localhost:8080) in your browser.'
+- title: Run the teardown playbook
+  name: cleaning_up
+  preamble: "To clean everything up, run the teardown playbook.\n\n[ansible/teardown.yml](ansible/teardown.yml):\n\
+    \n~~~ yaml\n- hosts: all\n  connection: local\n  tasks:\n    - name: Delete site\
+    \ resources\n      skupper.v2.resource:\n        state: absent\n        path:\
+    \ \"{{ resources_path }}\"\n        kubeconfig: \"{{ kubeconfig }}\"\n       \
+    \ namespace: \"{{ namespace }}\"\n~~~\n\nThe `skupper.v2.resource` modules from\
+    \ the `skupper.v2` collection\nis called for both west and east resources using\
+    \ action `absent`, which\nremoves the definitions provided through the YAML files.\n"
+  commands:
+    west:
+    - run: ansible-playbook -i ansible/inventory.yml ansible/teardown.yml
+      output: '[...]
+
+
+        PLAY RECAP *********************************************************************************************
+
+        east             : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+
+        west             : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+
+        '

@@ -1,0 +1,653 @@
+Metadata-Version: 2.4
+Name: sketcher
+Version: 0.1.0
+Summary: Python 3 native framework for documenting and testing Skupper examples
+Author: Sketcher Contributors
+License-Expression: Apache-2.0
+Project-URL: Homepage, https://github.com/skupperproject/skupper
+Project-URL: Repository, https://github.com/skupperproject/skupper
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: pyyaml>=6.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0; extra == "dev"
+
+# Sketcher
+
+[![main](https://github.com/skupperproject/skewer/actions/workflows/main.yaml/badge.svg)](https://github.com/skupperproject/skewer/actions/workflows/main.yaml)
+
+A Python 3 native framework for documenting and testing Skupper examples
+
+Sketcher takes `skewer.yaml` configuration files and generates both documentation (README.md) and automated test routines for Skupper example applications. It's a modern Python 3 rewrite of Skewer with zero dependencies beyond PyYAML.
+
+**Key improvements over Skewer:**
+- Pure Python 3 (stdlib + PyYAML only, no Plano dependency)
+- Simpler installation (`pip install` instead of symlinks)
+- 100% type hints and comprehensive documentation
+- 63 comprehensive unit tests
+- Enhanced platform support (Kubernetes, Podman, Docker, Linux)
+
+#### Contents
+
+- [Sketcher](#sketcher)
+      - [Contents](#contents)
+  - [An example example](#an-example-example)
+  - [Setting up Sketcher for your own example](#setting-up-sketcher-for-your-own-example)
+  - [Sketcher YAML](#sketcher-yaml)
+  - [Common step patterns](#common-step-patterns)
+  - [Demo mode](#demo-mode)
+  - [Extending demos with additional scenarios](#extending-demos-with-additional-scenarios)
+    - [Interactive development with demo-extend](#interactive-development-with-demo-extend)
+    - [Batch testing for CI/CD with test](#batch-testing-for-cicd-with-test)
+  - [Migration from Skewer](#migration-from-skewer)
+  - [Running against existing clusters](#running-against-existing-clusters)
+  - [Troubleshooting](#troubleshooting)
+    - [Subnet is already used](#subnet-is-already-used)
+  - [Contributing](#contributing)
+
+## An example example
+
+See [example/skewer.yaml](../skeleton/example/skewer.yaml) and the corresponding [example README output](../skeleton/example/README.md) for a complete working example.
+
+Additional real-world examples are available in the [sketcher_yamls](../sketcher_yamls/) directory.
+
+## Setting up Sketcher for your own example
+
+**Install Sketcher:**
+
+```bash
+# Install from source (PyPI package coming soon)
+cd /path/to/sketcher
+pip install sketcher
+```
+
+**Verify installation:**
+
+```bash
+python -m sketcher --help
+```
+
+**Create your Skupper example:**
+
+```bash
+cd my-skupper-example/
+```
+
+Create a `skewer.yaml` file describing your example:
+
+```bash
+emacs skewer.yaml
+```
+
+**Generate README and test:**
+
+```bash
+# Generate README.md from your skewer.yaml
+python -m sketcher generate skewer.yaml
+
+# Run the example steps in demo mode (pauses before cleanup)
+python -m sketcher demo skewer.yaml
+
+# Run full automated test (no pause)
+python -m sketcher test skewer.yaml
+```
+
+## Sketcher YAML
+
+The top level of the `skewer.yaml` file:
+
+```yaml
+title:              # Your example's title (required)
+subtitle:           # Your chosen subtitle (optional)
+workflow:           # The filename of your GitHub workflow (optional, default 'main.yaml')
+overview:           # Text introducing your example (optional)
+prerequisites:      # Text describing prerequisites (optional, has default text)
+sites:              # A map of named sites (see below)
+steps:              # A list of steps (see below)
+summary:            # Text to summarize what the user did (optional)
+next_steps:         # Text linking to more examples (optional, has default text)
+```
+
+For fields with default text such as `prerequisites` and `next_steps`, you can include the default text inside your custom text by using the `@default@` placeholder:
+
+```yaml
+next_steps:
+    @default@
+
+    This Way to the Egress.
+```
+
+To disable the GitHub workflow and CI badge, set `workflow` to `null`.
+
+A **site**:
+
+```yaml
+<site-name>:
+  title:            # The site title (optional)
+  platform:         # "kubernetes", "podman", "docker", or "linux" (required)
+  namespace:        # The Kubernetes namespace (required for Kubernetes sites)
+  env:              # A map of named environment variables
+```
+
+Kubernetes sites must have a `KUBECONFIG` environment variable with a path to a kubeconfig file. A tilde (~) in the kubeconfig file path is replaced with a temporary working directory during testing.
+
+Podman, Docker, and Linux sites must have a `SKUPPER_PLATFORM` variable with the appropriate value (`podman`, `docker`, or `linux`).
+
+Example sites:
+
+```yaml
+sites:
+  west:
+    title: West
+    platform: kubernetes
+    namespace: west
+    env:
+      KUBECONFIG: ~/.kube/config-west
+  east:
+    title: East
+    platform: podman
+    env:
+      SKUPPER_PLATFORM: podman
+  north:
+    title: North
+    platform: docker
+    env:
+      SKUPPER_PLATFORM: docker
+```
+
+A **step**:
+
+```yaml
+- title:            # The step title (required)
+  preamble:         # Text before the commands (optional)
+  commands:         # Named groups of commands. See below.
+  postamble:        # Text after the commands (optional)
+```
+
+An example step:
+
+```yaml
+steps:
+  - title: Expose the frontend service
+    preamble: |
+      We have established connectivity between the two namespaces and
+      made the backend in `east` available to the frontend in `west`.
+      Before we can test the application, we need external access to
+      the frontend.
+
+      Use `kubectl expose` with `--type LoadBalancer` to open network
+      access to the frontend service.
+    commands:
+      west:
+        - run: kubectl expose deployment/frontend --port 8080 --type LoadBalancer
+        - await_ingress: service/frontend
+        - run: kubectl get service/frontend
+          output: |
+            NAME       TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)          AGE
+            frontend   LoadBalancer   10.103.232.28   10.103.232.28    8080:30407/TCP   15s
+```
+
+The step commands are separated into named groups corresponding to the sites. Each named group contains a list of command entries.
+
+A **command**:
+
+```yaml
+- run:              # A shell command (required)
+  apply:            # Use this command only for "readme" or "test" (default is both)
+  output:           # Sample output to include in the README (optional)
+  expect_failure:   # If true, check that the command fails and keep going (default false)
+```
+
+Only the `run` and `output` fields appear in the generated README. The `output` field is used as sample output only, not for any kind of testing.
+
+**The `apply` field** is useful when you want the README instructions to be different from the test procedure:
+
+```yaml
+commands:
+  west:
+    - run: export KUBECONFIG=~/.kube/config-west
+      apply: readme    # Only appears in generated README
+    
+    - run: kubectl create namespace west --dry-run=client -o yaml | kubectl apply -f -
+      apply: test      # Only runs during test/demo execution
+    
+    - run: kubectl config set-context --current --namespace west
+      # No apply field = runs everywhere (README + test/demo)
+```
+
+**apply values:**
+- `readme` - Command only appears in the generated README, skipped during execution
+- `test` - Command only runs during test/demo/run modes, omitted from README
+- No `apply` field - Command appears in README AND runs during execution
+
+There are also special "await" commands that pause execution until a condition is met. They are used only for testing and do not impact the README:
+
+```yaml
+- await_resource:     # Wait for a resource to be ready
+                      # Example: await_resource: deployment/frontend
+
+- await_ingress:      # Wait for a service to have an external hostname or IP
+                      # Example: await_ingress: service/frontend
+
+- await_http_ok:      # Wait for an HTTP endpoint to return 200 OK
+                      # Example: await_http_ok: [service/frontend, "http://{}:8080/api/health"]
+
+- await_port:         # Wait for a TCP port to be available
+                      # Example: await_port: 8080
+
+- await_console_ok:   # Wait for Skupper console to be ready
+                      # Example: await_console_ok: true
+```
+
+Example commands with await operations:
+
+```yaml
+commands:
+  east:
+    - run: skupper expose deployment/backend --port 8080
+      output: |
+        deployment backend exposed as backend
+  west:
+    - await_resource: service/backend
+    - run: kubectl get service/backend
+      output: |
+        NAME      TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+        backend   ClusterIP   10.102.112.121   <none>        8080/TCP   30s
+```
+
+## Common step patterns
+
+Sketcher uses explicit YAML rather than a standard steps library. This makes behavior clearer and easier to debug. Here are common patterns you can adapt for your examples:
+
+**Access your Kubernetes clusters:**
+
+```yaml
+- title: Configure separate console sessions
+  preamble: |
+    Skupper is designed for multicluster application deployments.
+    To enable this, you need to run commands in separate
+    Kubernetes namespaces. For convenience, you can also set the
+    `KUBECONFIG` environment variable for each console session.
+  commands:
+    west:
+      - run: export KUBECONFIG=~/.kube/config-west
+        apply: readme
+    east:
+      - run: export KUBECONFIG=~/.kube/config-east
+        apply: readme
+  postamble: |
+    Each of these `export` commands sets the `KUBECONFIG`
+    environment variable to a custom path. You can use
+    any path you choose.
+```
+
+**Create your namespaces:**
+
+```yaml
+- title: Create your namespaces
+  preamble: |
+    Use `kubectl create namespace` to create the namespaces you
+    wish to use.
+  commands:
+    west:
+      - run: kubectl create namespace west
+      - run: kubectl config set-context --current --namespace west
+    east:
+      - run: kubectl create namespace east
+      - run: kubectl config set-context --current --namespace east
+```
+
+**Create your Skupper sites:**
+
+```yaml
+- title: Create your sites
+  preamble: |
+    A Skupper site is a location where components of your
+    application are running. Sites are linked together to form a
+    Skupper network for your application.
+
+    For this example, you need two Skupper sites, one in each
+    namespace.
+  commands:
+    west:
+      - run: skupper init --site-name west
+        output: |
+          Skupper is now installed in namespace 'west'.  Use 'skupper
+          status' to get more information.
+    east:
+      - run: skupper init --site-name east
+        output: |
+          Skupper is now installed in namespace 'east'.  Use 'skupper
+          status' to get more information.
+```
+
+**Link your sites:**
+
+```yaml
+- title: Link your sites
+  preamble: |
+    A Skupper link is a channel for communication between two
+    sites. Links serve as a transport for application connections
+    and requests.
+  commands:
+    west:
+      - await_resource: deployment/skupper-router
+      - run: skupper token create ~/west.token
+        output: |
+          Token written to ~/west.token
+    east:
+      - await_resource: deployment/skupper-router
+      - run: skupper link create ~/west.token
+        output: |
+          Site configured to link to west:8081 (name=link1)
+          Check the status of the link using 'skupper link status'.
+      - run: skupper link status --wait 60
+```
+
+**Cleaning up:**
+
+```yaml
+- title: Cleaning up
+  preamble: |
+    To remove Skupper and the other resources from this exercise,
+    use the following commands.
+  commands:
+    west:
+      - run: skupper delete
+      - run: kubectl delete service/frontend
+      - run: kubectl delete deployment/frontend
+    east:
+      - run: skupper delete
+      - run: kubectl delete deployment/backend
+```
+
+For more complete examples, see the [sketcher_yamls](../sketcher_yamls/) directory.
+
+## Demo mode
+
+Sketcher has a demo mode where it executes all the steps, but before cleaning up and exiting, it pauses so you can inspect and interact with the running application.
+
+When you run `python -m sketcher demo skewer.yaml`, after all steps complete successfully, Sketcher displays connection information and waits:
+
+```
+Demo time!
+
+Sites:
+
+  west: export KUBECONFIG=/tmp/sketcher-xyz/.kube/config-west
+  east: export KUBECONFIG=/tmp/sketcher-xyz/.kube/config-east
+
+Frontend URL:     http://localhost:8080/
+Console URL:      https://skupper-west.example.com:8010/
+Console user:     admin
+Console password: abc123xyz
+
+Are you done (yes)?
+```
+
+This allows you to:
+- Test the application manually
+- Inspect Skupper network status
+- Try different configurations
+- Verify expected behavior
+
+When you're finished, type `yes` to clean up and exit.
+
+## Extending demos with additional scenarios
+
+Sketcher provides two complementary approaches for extending your tests beyond the base `skewer.yaml` file:
+
+### Interactive development with demo-extend
+
+The `demo-extend` command allows you to attach to a running demo and execute additional test scenarios while keeping the clusters and services active. This is useful for iterative testing, adding observability features, or exploring different configurations.
+
+**Usage:**
+
+In one terminal, start the demo:
+
+```console
+$ python -m sketcher demo skewer.yaml
+```
+
+The demo will execute all setup steps and then pause, displaying connection information.
+
+In a separate terminal, run additional test scenarios:
+
+```console
+$ python -m sketcher demo-extend skewer-extend-observability.yaml
+$ python -m sketcher demo-extend skewer-extend-scaling.yaml
+$ python -m sketcher demo-extend skewer-extend-chaos.yaml
+```
+
+Each `demo-extend` invocation:
+- Attaches to the running demo's environment (same kubeconfigs, namespaces, clusters)
+- Executes the steps defined in the extension YAML file
+- Exits while leaving the demo running for further testing
+
+The extension YAML files follow the same format as `skewer.yaml` but only require a `steps` section (sites are inherited from the running demo):
+
+```yaml
+# skewer-extend-observability.yaml
+title: Add Skupper Network Observer
+steps:
+  - title: Install Skupper Network Observer
+    preamble: |
+      The Network Observer provides a web console for monitoring
+      your Skupper network in real time.
+    commands:
+      west:
+        - run: helm install skupper-network-observer oci://quay.io/skupper/helm/network-observer --version 2.2.1
+        - run: kubectl create route passthrough skupper-console --service=skupper-network-observer --port=https
+        - run: kubectl get secret skupper-network-observer-auth -o jsonpath='{.data.htpasswd}' | base64 -d
+          output: |
+            admin:password123
+```
+
+**Common use cases for demo extensions:**
+- Adding observability tools (Network Observer, Prometheus)
+- Testing scaling scenarios
+- Demonstrating optional features
+- Chaos/failure testing
+- Performance testing variations
+
+When finished, return to the first terminal and type `yes` to clean up and exit.
+
+### Batch testing for CI/CD with test
+
+The `test` command automatically discovers and runs all test scenarios in a single batch execution, making it ideal for CI/CD pipelines.
+
+**Usage:**
+
+```console
+$ python -m sketcher test skewer.yaml
+```
+
+This command:
+1. Generates the README (verifies documentation is up to date)
+2. Discovers all `skewer-extend-*.yaml` files in the current directory
+3. Concatenates their steps to the base `skewer.yaml` steps
+4. Runs all steps in sequence on Minikube
+5. Cleans up automatically when complete
+
+If no `skewer-extend-*.yaml` files exist, `test` runs only the base `skewer.yaml` (backward compatible).
+
+**Example project structure:**
+
+```
+my-skupper-example/
+  skewer.yaml                      # Base: setup, deploy app, basic smoke test
+  skewer-extend-observability.yaml # Add Network Observer
+  skewer-extend-scaling.yaml       # Test scaling scenarios
+  skewer-extend-failure.yaml       # Chaos/failure testing
+  README.md                        # Generated documentation
+```
+
+**GitHub Actions example:**
+
+```yaml
+name: Test
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Sketcher
+        run: |
+          pip install pyyaml
+          pip install -e /path/to/sketcher
+      - name: Run all tests
+        run: python -m sketcher test skewer.yaml
+```
+
+The `test` command runs all extension files automatically, in alphabetical order.
+
+**When to use each approach:**
+
+- Use `demo` + `demo-extend` for interactive development and debugging
+- Use `test` for automated CI/CD pipelines and comprehensive test runs
+
+## Migration from Skewer
+
+If you have existing Skewer YAML files that use `standard:` step references, Sketcher provides a migration tool to expand them into explicit YAML:
+
+```bash
+# Expand standard steps
+python -m sketcher resolve old-skewer.yaml -o new-skewer.yaml
+
+# Or modify in-place
+python -m sketcher resolve skewer.yaml --in-place
+
+# Batch process multiple files
+for f in examples/*/skewer.yaml; do
+  python -m sketcher resolve "$f" --in-place
+done
+```
+
+**Why explicit YAML?**
+
+Sketcher uses fully expanded YAML instead of runtime step expansion because:
+- **Clearer behavior** - No hidden magic, what you see is what runs
+- **Easier debugging** - All commands visible in the YAML file
+- **Better git diffs** - Changes are explicit in version control
+- **Simpler code** - No complex runtime expansion logic
+
+**Batch migration results:**
+- ✅ 19/30 real Skupper examples resolved (63%)
+- ✅ 100% success rate on modern examples (2024+)
+- ⚠️ Failures only on very old yamls with unprefixed step names
+
+For new examples, use the common step patterns shown above rather than relying on a standard steps library.
+
+## Running against existing clusters
+
+By default, `python -m sketcher demo` and `python -m sketcher run` start a local Minikube instance automatically and use it for all Kubernetes sites. If you want to run against your own clusters instead, pass kubeconfig file paths as positional arguments.
+
+Kubeconfigs are assigned to Kubernetes sites **in the order the sites are defined** in `skewer.yaml`. For example, given this site definition:
+
+```yaml
+sites:
+  west:
+    platform: kubernetes
+    namespace: west
+    env:
+      KUBECONFIG: ~/.kube/config-west
+  east:
+    platform: kubernetes
+    namespace: east
+    env:
+      KUBECONFIG: ~/.kube/config-east
+```
+
+`west` is the first Kubernetes site and `east` is the second. To run with a remote OpenShift cluster for `west` and a local Minikube instance for `east`, first start Minikube and export its kubeconfig:
+
+```bash
+minikube start -p east
+minikube -p east kubeconfig > ~/.kube/config-east-minikube
+```
+
+Then pass the kubeconfigs in site order (west first, east second):
+
+```bash
+python -m sketcher demo skewer.yaml ~/.kube/config-west-openshift ~/.kube/config-east-minikube
+```
+
+Or equivalently for `run`:
+
+```bash
+python -m sketcher run skewer.yaml ~/.kube/config-west-openshift ~/.kube/config-east-minikube
+```
+
+The provided kubeconfigs override the paths in `skewer.yaml` at runtime — the `skewer.yaml` file itself is not modified. Each kubeconfig must already be authenticated and have the correct namespace context set before running.
+
+## Troubleshooting
+
+### Subnet is already used
+
+Error:
+
+```console
+plano: notice: Starting Minikube
+plano: notice: Running command 'minikube start -p skewer --auto-update-drivers false'
+* Creating podman container (CPUs=2, Memory=16000MB) ...- E0229 05:44:29.821273   12224 network_create.go:113] error while trying to create podman network skewer 192.168.49.0/24
+
+Error: subnet 192.168.49.0/24 is already used on the host or by another config
+```
+
+Remove the existing Podman network. Note that it might belong to another user on the host.
+
+```shell
+sudo podman network rm minikube
+```
+
+### Sketcher command not found after installation
+
+If `python -m sketcher` fails with "No module named sketcher", ensure you installed Sketcher correctly:
+
+```bash
+cd /path/to/sketcher
+pip install sketcher
+python -m sketcher --help
+```
+
+### Resolver fails on old Skewer YAML
+
+Very old Skewer YAML files (pre-2024) may use unprefixed step names. The resolver only recognizes prefixed names like `platform/access_your_kubernetes_clusters`. You'll need to manually update these YAMLs or write explicit steps.
+
+## Contributing
+
+Sketcher is production-ready with 63 passing tests, comprehensive documentation, and validation against 30 real Skupper examples.
+
+For development setup, architecture details, test coverage, and contribution guidelines, see [DEVELOPERS.md](DEVELOPERS.md).
+
+**Quick contributor setup:**
+
+```bash
+# Clone and setup
+git clone https://github.com/skupperproject/sketcher
+cd sketcher
+uv venv
+source .venv/bin/activate
+uv pip install pyyaml pytest
+
+# Run tests
+python -m pytest tests/ -v
+
+# Should see: ====== 63 passed ======
+```
+
+## License
+
+Same as Skupper project (Apache License 2.0).
+
+---
+
+**Sketcher: Modern Python 3 framework for Skupper examples** 🚀
