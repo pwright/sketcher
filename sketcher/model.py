@@ -1,5 +1,5 @@
 """
-Phoenix model - Core data model classes.
+Sketcher model - Core data model classes.
 
 Parses skewer.yaml files (must be "resolved" - no standard: references).
 Much simpler than Skewer since all expansion is done by resolver.py.

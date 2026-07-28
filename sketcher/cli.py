@@ -1,4 +1,4 @@
-"""Phoenix CLI - Command-line interface."""
+"""Sketcher CLI - Command-line interface."""
 
 import logging
 import os
@@ -232,8 +232,8 @@ def main():
                 quiet=quiet
             )
         elif args.command == "demo":
-            # Set PHOENIX_DEMO env var
-            os.environ["PHOENIX_DEMO"] = "1"
+            # Set SKETCHER_DEMO env var
+            os.environ["SKETCHER_DEMO"] = "1"
 
             # Use Kind or Minikube if no kubeconfigs provided
             if not args.kubeconfigs:

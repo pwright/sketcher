@@ -12,7 +12,7 @@ Sketcher now has a modern, user-friendly CLI experience matching (and in some wa
 ### 1. 🎨 Color Output
 ```bash
 # Automatically enabled on TTY, or force with:
-PHOENIX_COLOR=1 sketcher run example.yaml
+SKETCHER_COLOR=1 sketcher run example.yaml
 ```
 
 Colors used:
@@ -136,7 +136,7 @@ DEBUG: Configuring logging level: DEBUG
 
 ```bash
 # Test color output
-PHOENIX_COLOR=1 sketcher run example.yaml
+SKETCHER_COLOR=1 sketcher run example.yaml
 
 # Test quiet mode (for scripting)
 sketcher run example.yaml --quiet && echo "Success!"

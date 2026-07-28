@@ -1,8 +1,8 @@
 # Example extension file for adding Skupper Network Observer to a running demo
 #
 # Usage:
-#   Terminal 1: python -m phoenix demo skewer.yaml
-#   Terminal 2: python -m phoenix demo-extend skewer-extend-observability.yaml
+#   Terminal 1: python -m sketcher demo skewer.yaml
+#   Terminal 2: python -m sketcher demo-extend skewer-extend-observability.yaml
 #
 # This demonstrates how to add observability features to a minimal base example
 

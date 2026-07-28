@@ -1,5 +1,5 @@
 """
-Unit tests for phoenix.resolver module.
+Unit tests for sketcher.resolver module.
 """
 
 import tempfile

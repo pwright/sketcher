@@ -1,4 +1,4 @@
-"""Demo mode functionality for Phoenix."""
+"""Demo mode functionality for Sketcher."""
 
 import json
 import os
@@ -19,7 +19,7 @@ def save_demo_context(model: Model, work_dir: str):
     and execute additional steps in the same environment.
 
     Args:
-        model: Phoenix Model instance
+        model: Sketcher Model instance
         work_dir: Working directory path
     """
     context_file = Path(work_dir) / ".demo-context.json"
@@ -55,13 +55,13 @@ def load_demo_context(work_dir: Optional[str] = None) -> Optional[Dict[str, Any]
     """Load demo context from state file if it exists.
 
     Args:
-        work_dir: Working directory (default: $TMPDIR/phoenix)
+        work_dir: Working directory (default: $TMPDIR/sketcher)
 
     Returns:
         Demo context dict or None if no demo is running
     """
     if work_dir is None:
-        work_dir = Path("/tmp") / "phoenix"
+        work_dir = Path("/tmp") / "sketcher"
 
     context_file = Path(work_dir) / ".demo-context.json"
 
@@ -105,7 +105,7 @@ def validate_demo_context(context: Optional[Dict[str, Any]]):
         SketcherError: If validation fails with helpful message
     """
     if not context:
-        raise SketcherError("No active demo found. Run 'phoenix demo' first in another terminal.")
+        raise SketcherError("No active demo found. Run 'sketcher demo' first in another terminal.")
 
     if not is_demo_active(context):
         pid = context.get("pid", "unknown")
@@ -196,7 +196,7 @@ def pause_for_demo(model: Model, quiet: bool = False):
     Shows console URLs, frontend URLs, and waits for user input.
 
     Args:
-        model: Phoenix Model instance
+        model: Sketcher Model instance
         quiet: If True, suppress progress messages
     """
     utils.notice("Pausing for demo time", quiet=quiet)
@@ -245,7 +245,7 @@ def pause_for_demo(model: Model, quiet: bool = False):
         utils.cprint(f"Console password: {password}", color="yellow", file=utils.sys.stderr)
         utils.eprint()
 
-    # Wait for user (unless PHOENIX_DEMO_NO_WAIT is set)
-    if "PHOENIX_DEMO_NO_WAIT" not in os.environ:
+    # Wait for user (unless SKETCHER_DEMO_NO_WAIT is set)
+    if "SKETCHER_DEMO_NO_WAIT" not in os.environ:
         while input("Are you done (yes)? ") != "yes":
             pass

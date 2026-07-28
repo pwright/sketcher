@@ -1,4 +1,4 @@
-"""README generation from resolved Phoenix yaml files."""
+"""README generation from resolved Sketcher yaml files."""
 
 import re
 from pathlib import Path
@@ -9,7 +9,7 @@ from sketcher.model import Model
 
 
 def generate_readme(yaml_file: str, output_file: Optional[str] = None, quiet: bool = False) -> str:
-    """Generate README.md from a resolved Phoenix yaml file.
+    """Generate README.md from a resolved Sketcher yaml file.
 
     Args:
         yaml_file: Path to resolved skewer.yaml file
@@ -157,7 +157,7 @@ def generate_sites_section(model: Model) -> str:
     Shows the platform, namespace, and environment setup for each site.
 
     Args:
-        model: Phoenix Model instance
+        model: Sketcher Model instance
 
     Returns:
         Markdown text for the sites section
@@ -190,7 +190,7 @@ def generate_readme_step(model: Model, step) -> str:
     """Generate markdown for a single step.
 
     Args:
-        model: Phoenix Model instance
+        model: Sketcher Model instance
         step: Step to generate markdown for
 
     Returns:

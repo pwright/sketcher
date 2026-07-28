@@ -15,7 +15,7 @@ This document tracks the implementation of UX recommendations from `UX.md`.
 - ✅ Added `cprint()` function for colored output
 - ✅ Added `console_color()` context manager
 - ✅ Implemented TTY detection (`_is_color_enabled()`)
-- ✅ Added `PHOENIX_COLOR` environment variable support
+- ✅ Added `SKETCHER_COLOR` environment variable support
 - ✅ Color codes: green, red, yellow, cyan, magenta, blue, gray, black, white
 - ✅ Bright mode support for all colors
 
@@ -212,7 +212,7 @@ Following skeleton's proven palette:
 
 1. **Color output:**
    ```bash
-   PHOENIX_COLOR=1 sketcher run example.yaml
+   SKETCHER_COLOR=1 sketcher run example.yaml
    ```
 
 2. **Quiet mode:**

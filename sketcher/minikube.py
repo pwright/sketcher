@@ -1,4 +1,4 @@
-"""Minikube integration for Phoenix."""
+"""Minikube integration for Sketcher."""
 
 import json
 import os
@@ -30,7 +30,7 @@ class Minikube:
         """
         self.yaml_file = yaml_file
         self.kubeconfigs: List[str] = []
-        self.work_dir = Path(tempfile.gettempdir()) / "phoenix"
+        self.work_dir = Path(tempfile.gettempdir()) / "sketcher"
         self.tunnel_process = None
 
     def __enter__(self):

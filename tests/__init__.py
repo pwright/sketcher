@@ -1,1 +1,1 @@
-"""Phoenix tests package."""
+"""Sketcher tests package."""

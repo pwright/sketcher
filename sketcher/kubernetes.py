@@ -1,4 +1,4 @@
-"""Kubernetes-specific operations for Phoenix."""
+"""Kubernetes-specific operations for Sketcher."""
 
 import json
 import time

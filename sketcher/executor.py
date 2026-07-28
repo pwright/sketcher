@@ -1,4 +1,4 @@
-"""Step execution logic for Phoenix."""
+"""Step execution logic for Sketcher."""
 
 import os
 import tempfile
@@ -57,7 +57,7 @@ def run_steps(
             run_step(model, step, work_dir, quiet=quiet)
 
         # Demo mode support
-        if "PHOENIX_DEMO" in os.environ:
+        if "SKETCHER_DEMO" in os.environ:
             from sketcher import demo
             demo.save_demo_context(model, work_dir)
             demo.pause_for_demo(model, quiet=quiet)
@@ -79,7 +79,7 @@ def run_step(model: Model, step, work_dir: str, check: bool = True, quiet: bool 
     """Run a single step.
 
     Args:
-        model: Phoenix Model instance
+        model: Sketcher Model instance
         step: Step to run
         work_dir: Working directory for ~ substitution
         check: If True, raise error on command failure
@@ -181,7 +181,7 @@ def print_debug_output(model: Model):
     Shows kubectl get all and skupper status for each site.
 
     Args:
-        model: Phoenix Model instance
+        model: Sketcher Model instance
     """
     utils.eprint("\n" + "=" * 80)
     utils.cprint("DEBUG OUTPUT", color="yellow", file=utils.sys.stderr)

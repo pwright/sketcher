@@ -1,5 +1,5 @@
 """
-Phoenix utilities module.
+Sketcher utilities module.
 
 Standard library replacements for Plano functions.
 Clean, readable implementations using Python 3 stdlib.
@@ -30,7 +30,7 @@ from .exceptions import SketcherError, SketcherProcessError, SketcherTimeout
 # Logging Configuration
 # ==============================================================================
 #
-# Phoenix logging system provides:
+# Sketcher logging system provides:
 # - Color-coded output (green=success, red=error, yellow=warning, cyan=info)
 # - Quiet mode support (suppress progress messages for scripting/automation)
 # - Visual operation hierarchy (nested operations with tree-like display)
@@ -43,7 +43,7 @@ from .exceptions import SketcherError, SketcherProcessError, SketcherTimeout
 # - console_color(): Context manager for colored blocks
 #
 # Environment variables:
-# - PHOENIX_COLOR: Force enable color output even in non-TTY
+# - SKETCHER_COLOR: Force enable color output even in non-TTY
 # ==============================================================================
 
 _logging_prefix = ""
@@ -75,7 +75,7 @@ def _get_color_code(color: str, bright: bool = False) -> str:
 
 def _is_color_enabled(file) -> bool:
     """Check if color output is supported."""
-    return (os.getenv("PHOENIX_COLOR") is not None
+    return (os.getenv("SKETCHER_COLOR") is not None
             or (hasattr(file, "isatty") and file.isatty()))
 
 

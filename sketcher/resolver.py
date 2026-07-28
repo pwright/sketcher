@@ -1,11 +1,11 @@
 """
-Phoenix resolver - Migration tool to expand standard steps.
+Sketcher resolver - Migration tool to expand standard steps.
 
 This module implements the standard step expansion logic from Skewer
 as a standalone migration tool. It reads skewer.yaml files with
 `standard:` references and expands them to complete yaml files.
 
-One-time use: phoenix resolve input.yaml -o output.yaml
+One-time use: sketcher resolve input.yaml -o output.yaml
 """
 
 import sys

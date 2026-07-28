@@ -1,5 +1,5 @@
 """
-Unit tests for phoenix.utils module.
+Unit tests for sketcher.utils module.
 """
 
 import json
@@ -27,7 +27,7 @@ class TestFileIO(unittest.TestCase):
     def test_read_write(self):
         """Test read and write functions."""
         file_path = Path(self.temp_dir) / "test.txt"
-        content = "Hello, Phoenix!"
+        content = "Hello, Sketcher!"
 
         utils.write(file_path, content)
         self.assertTrue(file_path.exists())
@@ -48,7 +48,7 @@ class TestFileIO(unittest.TestCase):
     def test_read_write_json(self):
         """Test JSON read and write."""
         file_path = Path(self.temp_dir) / "test.json"
-        data = {"name": "Phoenix", "version": "0.1.0"}
+        data = {"name": "Sketcher", "version": "0.1.0"}
 
         utils.write_json(file_path, data)
         result = utils.read_json(file_path)

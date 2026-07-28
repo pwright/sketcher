@@ -1,5 +1,5 @@
 """
-Unit tests for phoenix.model module.
+Unit tests for sketcher.model module.
 """
 
 import tempfile

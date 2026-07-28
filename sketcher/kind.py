@@ -1,4 +1,4 @@
-"""Kind integration for Phoenix."""
+"""Kind integration for Sketcher."""
 
 import json
 import os
@@ -30,7 +30,7 @@ class Kind:
         """
         self.yaml_file = yaml_file
         self.kubeconfigs: List[str] = []
-        self.work_dir = Path(tempfile.gettempdir()) / "phoenix"
+        self.work_dir = Path(tempfile.gettempdir()) / "sketcher"
         self.cluster_name = "skewer"
 
     def __enter__(self):
