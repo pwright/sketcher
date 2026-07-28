@@ -235,9 +235,10 @@ def pause_for_demo(model: Model, quiet: bool = False):
 
     utils.eprint()
 
-    if frontend_url:
-        utils.cprint(f"Frontend URL:     {frontend_url}", color="green", file=utils.sys.stderr)
-        utils.eprint()
+    # TODO: See TODO.md - extend yaml schema to support optional frontend-url
+    # if frontend_url:
+    #     utils.cprint(f"Frontend URL:     {frontend_url}", color="green", file=utils.sys.stderr)
+    #     utils.eprint()
 
     if console_url:
         utils.cprint(f"Console URL:      {console_url}", color="green", file=utils.sys.stderr)
