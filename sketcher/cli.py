@@ -235,8 +235,13 @@ def main():
             # Set SKETCHER_DEMO env var
             os.environ["SKETCHER_DEMO"] = "1"
 
-            # Use Kind or Minikube if no kubeconfigs provided
-            if not args.kubeconfigs:
+            # Check if any sites require Kubernetes
+            from sketcher.model import Model
+            temp_model = Model(args.yaml_file)
+            needs_k8s = any(site.platform == "kubernetes" for _, site in temp_model.sites)
+
+            # Use Kind or Minikube only if sites require Kubernetes and no kubeconfigs provided
+            if not args.kubeconfigs and needs_k8s:
                 if args.kind:
                     # Use Kind
                     with kind.Kind(args.yaml_file) as k:
@@ -260,7 +265,7 @@ def main():
             else:
                 executor.run_steps(
                     args.yaml_file,
-                    kubeconfigs=args.kubeconfigs,
+                    kubeconfigs=args.kubeconfigs if args.kubeconfigs else None,
                     debug=args.debug,
                     quiet=quiet
                 )
@@ -282,10 +287,25 @@ def main():
         elif args.command == "test":
             yaml_path = Path(args.yaml_file)
 
-            # Use Kind or Minikube
-            cluster_mgr = kind.Kind(args.yaml_file) if args.kind else minikube.Minikube(args.yaml_file)
+            # Check if any sites require Kubernetes
+            from sketcher.model import Model
+            temp_model = Model(args.yaml_file)
+            needs_k8s = any(site.platform == "kubernetes" for _, site in temp_model.sites)
 
-            with cluster_mgr as cm:
+            # Use Kind or Minikube only if sites require Kubernetes
+            if needs_k8s:
+                cluster_mgr = kind.Kind(args.yaml_file) if args.kind else minikube.Minikube(args.yaml_file)
+                with cluster_mgr as cm:
+                    kubeconfigs = cm.kubeconfigs
+                    work_dir = str(cm.work_dir)
+            else:
+                # No cluster needed - use temporary directory
+                import tempfile
+                temp_dir = tempfile.mkdtemp(prefix="sketcher-")
+                kubeconfigs = None
+                work_dir = temp_dir
+
+            try:
                 # Generate README
                 utils.info("Generating README...", quiet=quiet)
                 generator.generate_readme(args.yaml_file)
@@ -294,8 +314,8 @@ def main():
                 utils.info("Running main steps...", quiet=quiet)
                 executor.run_steps(
                     args.yaml_file,
-                    kubeconfigs=cm.kubeconfigs,
-                    work_dir=str(cm.work_dir),
+                    kubeconfigs=kubeconfigs,
+                    work_dir=work_dir,
                     debug=args.debug,
                     quiet=quiet
                 )
@@ -313,12 +333,11 @@ def main():
                     # Create extended model
                     context = {
                         "sites": {},
-                        "work_dir": str(cm.work_dir)
+                        "work_dir": work_dir
                     }
 
                     # Build context from model
-                    from sketcher.model import Model
-                    base_model = Model(args.yaml_file, cm.kubeconfigs)
+                    base_model = Model(args.yaml_file, kubeconfigs)
                     for site_name, site in base_model.sites:
                         context["sites"][site_name] = {
                             "platform": site.platform,
@@ -330,10 +349,15 @@ def main():
                     extended_model = demo.create_extended_model(context, extend_file)
                     executor.run_steps(
                         extended_model.yaml_file,
-                        work_dir=str(cm.work_dir),
+                        work_dir=work_dir,
                         debug=args.debug,
                         quiet=quiet
                     )
+            finally:
+                # Clean up temp directory if we created one
+                if not needs_k8s:
+                    import shutil
+                    shutil.rmtree(temp_dir, ignore_errors=True)
         elif args.command == "clean":
             # Remove __pycache__ directories
             for pycache in Path(".").rglob("__pycache__"):
