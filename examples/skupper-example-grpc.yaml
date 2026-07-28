@@ -282,7 +282,7 @@ steps:
     '
   commands:
     grpc-a:
-    - run: kubectl apply -f deployment-loadgenerator.yaml -n grpc-a
+    - run: kubectl apply -f loadgenerator/deployment-loadgenerator.yaml -n grpc-a
 - title: Observe the load generator output
   preamble: 'In the terminal for the **gRPC A** cluster, observe the output
 
@@ -301,11 +301,12 @@ steps:
     '
   commands:
     grpc-a:
-    - run: kubectl delete -f deployment-loadgenerator.yaml -n grpc-a
+    - run: kubectl delete -f loadgenerator/deployment-loadgenerator.yaml -n grpc-a
       apply: readme
 - commands:
     grpc-a:
-    - run: kubectl delete -f deployment-loadgenerator.yaml -n grpc-a --ignore-not-found
+    - run: kubectl delete -f loadgenerator/deployment-loadgenerator.yaml -n grpc-a
+        --ignore-not-found
     - run: kubectl delete -f resources-a
     grpc-b:
     - run: kubectl delete -f resources-b
