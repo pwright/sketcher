@@ -6,17 +6,9 @@ A Python 3 native framework for documenting and testing Skupper examples
 
 Sketcher takes `skewer.yaml` configuration files and generates both documentation (README.md) and automated test routines for Skupper example applications. It's a modern Python 3 rewrite of Skewer with zero dependencies beyond PyYAML.
 
-**Key improvements over Skewer:**
-- Pure Python 3 (stdlib + PyYAML only, no Plano dependency)
-- Simpler installation (`pip install` instead of symlinks)
-- 100% type hints and comprehensive documentation
-- 63 comprehensive unit tests
-- Enhanced platform support (Kubernetes, Podman, Docker, Linux)
-
 #### Contents
 
-- [Sketcher](#sketcher)
-      - [Contents](#contents)
+- [Sketcher](#sketcher)      - [Contents](#contents)
   - [An example example](#an-example-example)
   - [Setting up Sketcher for your own example](#setting-up-sketcher-for-your-own-example)
   - [Sketcher YAML](#sketcher-yaml)
@@ -29,7 +21,10 @@ Sketcher takes `skewer.yaml` configuration files and generates both documentatio
   - [Running against existing clusters](#running-against-existing-clusters)
   - [Troubleshooting](#troubleshooting)
     - [Subnet is already used](#subnet-is-already-used)
+    - [Sketcher command not found after installation](#sketcher-command-not-found-after-installation)
+    - [Resolver fails on old Skewer YAML](#resolver-fails-on-old-skewer-yaml)
   - [Contributing](#contributing)
+  - [License](#license)
 
 ## An example example
 
@@ -62,7 +57,7 @@ cd my-skupper-example/
 Create a `skewer.yaml` file describing your example:
 
 ```bash
-emacs skewer.yaml
+<editor> skewer.yaml
 ```
 
 **Generate README and test:**

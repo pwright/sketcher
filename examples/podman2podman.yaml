@@ -1,5 +1,5 @@
 title: Skupper Podman-to-Podman Link
-subtitle: Hello World frontend/backend using Phoenix with Podman sites and static linking
+subtitle: Hello World frontend/backend using Sketcher with Podman sites and static linking
 overview: "This example demonstrates linking two Podman-based Skupper sites\n\
   running on the same host using static link files.\n\nIt contains two services:\n\n\
   * A backend service that exposes an `/api/hello` endpoint running in the\n  \

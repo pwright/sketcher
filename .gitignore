@@ -1,6 +1,12 @@
 __pycache__/
+*.pyc
+*.pyo
+*.egg-info/
 /README.html
 /htmlcov
 /.coverage
 link.yaml
 .claude/
+/build/
+/dist/
+*.egg
