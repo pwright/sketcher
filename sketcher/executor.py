@@ -151,7 +151,6 @@ def run_step(model: Model, step, work_dir: str, check: bool = True, quiet: bool 
 
                     # Execute shell command
                     if command.run:
-                        utils.debug(f"Running: {command.run}")
                         # Replace ~ with work_dir
                         cmd = command.run.replace("~", work_dir)
 
