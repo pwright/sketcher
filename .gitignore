@@ -28,3 +28,4 @@ link.yaml
 *.tmp
 *.bak
 *~
+bin/

@@ -40,17 +40,22 @@ func RunSteps(yamlFile string, kubeconfigs []string, workDir string, debug, quie
 
 	// Create work directory
 	if workDir == "" {
-		// Create unique temp directory with sketcher- prefix
-		tempDir, err := os.MkdirTemp(os.TempDir(), "sketcher-")
+		// Use /tmp directly to avoid macOS temp paths with special characters
+		// that fail skupper's token file path validation (regex: ^[A-Za-z0-9./~-]+$)
+		baseDir := "/tmp"
+		utils.Debug("Creating temporary work directory in %s", baseDir)
+		tempDir, err := os.MkdirTemp(baseDir, "sketcher-")
 		if err != nil {
 			return fmt.Errorf("failed to create work directory: %w", err)
 		}
 		workDir = tempDir
 		utils.Info("Using work directory: %s", workDir)
 	} else {
+		utils.Debug("Using specified work directory: %s", workDir)
 		if err := os.MkdirAll(workDir, 0755); err != nil {
 			return err
 		}
+		utils.Debug("Work directory created: %s", workDir)
 	}
 
 	// Run all steps except cleaning_up

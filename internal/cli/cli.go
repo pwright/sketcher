@@ -224,7 +224,7 @@ func runWithKind(yamlFile string, debug, quiet bool) error {
 	if err != nil {
 		return err
 	}
-	defer k.Cleanup()
+	defer k.Cleanup(debug)
 
 	// Clean work directory if there's a stale or different demo
 	demo.CleanWorkDirIfNeeded(k.WorkDir, yamlFile)
@@ -241,7 +241,7 @@ func runWithMinikube(yamlFile string, debug, quiet bool) error {
 	if err != nil {
 		return err
 	}
-	defer mk.Cleanup()
+	defer mk.Cleanup(debug)
 
 	// Clean work directory if there's a stale or different demo
 	demo.CleanWorkDirIfNeeded(mk.WorkDir, yamlFile)
@@ -258,7 +258,7 @@ func testWithKind(yamlFile string, debug, quiet bool) error {
 	if err != nil {
 		return err
 	}
-	defer k.Cleanup()
+	defer k.Cleanup(debug)
 
 	if err := k.Setup(); err != nil {
 		return err
@@ -272,7 +272,7 @@ func testWithMinikube(yamlFile string, debug, quiet bool) error {
 	if err != nil {
 		return err
 	}
-	defer mk.Cleanup()
+	defer mk.Cleanup(debug)
 
 	if err := mk.Setup(); err != nil {
 		return err
@@ -282,7 +282,8 @@ func testWithMinikube(yamlFile string, debug, quiet bool) error {
 }
 
 func testWithoutCluster(yamlFile string, debug, quiet bool) error {
-	workDir := os.TempDir() + "/sketcher-"
+	// Use /tmp directly to avoid macOS temp paths with special characters
+	workDir := "/tmp/sketcher-"
 	return runTest(yamlFile, nil, workDir, debug, quiet)
 }
 

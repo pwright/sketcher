@@ -24,7 +24,8 @@ type Kind struct {
 func New(yamlFile string) (*Kind, error) {
 	return &Kind{
 		YAMLFile:    yamlFile,
-		WorkDir:     filepath.Join(os.TempDir(), "sketcher"),
+		// Use /tmp directly to avoid macOS temp paths with special characters
+		WorkDir:     "/tmp/sketcher",
 		ClusterName: "skewer",
 	}, nil
 }
@@ -53,12 +54,14 @@ func (k *Kind) Setup() error {
 	}
 
 	// Create work directory
+	utils.Debug("Creating work directory: %s", k.WorkDir)
 	if err := os.MkdirAll(k.WorkDir, 0755); err != nil {
 		return err
 	}
 
 	// Create Kind config
 	kindConfig := filepath.Join(k.WorkDir, "kind-config.yaml")
+	utils.Debug("Creating Kind config file: %s", kindConfig)
 	configContent := `kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
@@ -79,6 +82,7 @@ nodes:
 	}
 
 	// Create Kind cluster
+	utils.Debug("Creating Kind cluster with name '%s'", k.ClusterName)
 	if err := utils.Run(fmt.Sprintf("kind create cluster --name %s --config %s", k.ClusterName, kindConfig), false); err != nil {
 		return err
 	}
@@ -109,10 +113,12 @@ nodes:
 		kubeconfigPath := site.Env["KUBECONFIG"]
 		kubeconfigPath = filepath.Join(k.WorkDir, filepath.Base(kubeconfigPath))
 
+		utils.Debug("Creating kubeconfig for site %s: %s", site.Name, kubeconfigPath)
 		if err := utils.WriteFile(kubeconfigPath, string(baseKubeconfig)); err != nil {
 			return err
 		}
 
+		utils.Debug("Setting KUBECONFIG for site %s: %s", site.Name, kubeconfigPath)
 		site.SetEnv("KUBECONFIG", kubeconfigPath)
 		k.Kubeconfigs = append(k.Kubeconfigs, kubeconfigPath)
 	}
@@ -121,9 +127,21 @@ nodes:
 }
 
 // Cleanup stops Kind
-func (k *Kind) Cleanup() error {
+func (k *Kind) Cleanup(debug bool) error {
 	fmt.Println("Stopping Kind")
 
+	// In debug mode, ask for confirmation before deleting cluster
+	if debug {
+		fmt.Printf("\nDelete Kind cluster '%s'? (y/n): ", k.ClusterName)
+		var response string
+		fmt.Scanln(&response)
+		if response != "y" && response != "Y" {
+			fmt.Println("Cluster preserved for inspection")
+			return nil
+		}
+	}
+
+	utils.Debug("Deleting Kind cluster '%s'", k.ClusterName)
 	cmd := exec.Command("kind", "delete", "cluster", "--name", k.ClusterName)
 	cmd.Run()
 

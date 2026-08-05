@@ -36,7 +36,8 @@ type SiteContext struct {
 // or if it's a different YAML file (different demo). Returns true if cleaned.
 func CleanWorkDirIfNeeded(workDir, yamlFile string) (bool, error) {
 	if workDir == "" {
-		workDir = filepath.Join(os.TempDir(), "sketcher")
+		// Use /tmp directly to avoid macOS temp paths with special characters
+		workDir = "/tmp/sketcher"
 	}
 
 	contextFile := filepath.Join(workDir, ".demo-context.json")
@@ -76,7 +77,8 @@ func CleanWorkDirIfNeeded(workDir, yamlFile string) (bool, error) {
 // LoadDemoContext loads demo context from state file
 func LoadDemoContext(workDir string) (*Context, error) {
 	if workDir == "" {
-		workDir = filepath.Join(os.TempDir(), "sketcher")
+		// Use /tmp directly to avoid macOS temp paths with special characters
+		workDir = "/tmp/sketcher"
 	}
 
 	contextFile := filepath.Join(workDir, ".demo-context.json")
@@ -171,6 +173,7 @@ func CreateExtendedModel(context *Context, extendFile string) (*model.Model, err
 
 	// Write synthetic file
 	syntheticFile := filepath.Join(context.WorkDir, ".extended-model.yaml")
+	utils.Debug("Creating extended model file: %s", syntheticFile)
 	if err := utils.WriteYAML(syntheticFile, syntheticData); err != nil {
 		return nil, err
 	}
@@ -200,6 +203,7 @@ func CreateExtendedModel(context *Context, extendFile string) (*model.Model, err
 // SaveDemoContext saves the demo context to a JSON file
 func SaveDemoContext(m *model.Model, workDir string) error {
 	contextFile := filepath.Join(workDir, ".demo-context.json")
+	utils.Debug("Saving demo context to: %s", contextFile)
 
 	// Extract site data from model
 	sitesData := make(map[string]*SiteContext)

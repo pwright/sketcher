@@ -25,7 +25,8 @@ type Minikube struct {
 func New(yamlFile string) (*Minikube, error) {
 	return &Minikube{
 		YAMLFile: yamlFile,
-		WorkDir:  filepath.Join(os.TempDir(), "sketcher"),
+		// Use /tmp directly to avoid macOS temp paths with special characters
+		WorkDir:  "/tmp/sketcher",
 	}, nil
 }
 
@@ -42,17 +43,20 @@ func (mk *Minikube) Setup() error {
 	}
 
 	// Create work directory
+	utils.Debug("Creating work directory: %s", mk.WorkDir)
 	if err := os.MkdirAll(mk.WorkDir, 0755); err != nil {
 		return err
 	}
 
 	// Start Minikube
+	utils.Debug("Starting minikube with profile 'skewer'")
 	if err := utils.Run("minikube start -p skewer --auto-update-drivers false", false); err != nil {
 		return err
 	}
 
 	// Start tunnel (background)
 	tunnelOutputPath := filepath.Join(mk.WorkDir, "minikube-tunnel-output")
+	utils.Debug("Creating tunnel output file: %s", tunnelOutputPath)
 	tunnelOutput, err := os.Create(tunnelOutputPath)
 	if err != nil {
 		utils.Run("minikube delete -p skewer", false)
@@ -98,35 +102,39 @@ func (mk *Minikube) Setup() error {
 			kubeconfig = filepath.Join(mk.WorkDir, kubeconfig)
 		}
 
+		utils.Debug("Setting KUBECONFIG for site %s: %s", site.Name, kubeconfig)
 		site.SetEnv("KUBECONFIG", kubeconfig)
 		mk.Kubeconfigs = append(mk.Kubeconfigs, kubeconfig)
 
 		// Update context using site's environment
+		utils.Debug("Updating minikube context for site %s (profile: skewer)", site.Name)
 		err := site.WithEnv(func() error {
 			cmd := exec.Command("minikube", "update-context", "-p", "skewer")
 			return cmd.Run()
 		})
 		if err != nil {
-			mk.Cleanup()
+			mk.Cleanup(false)
 			return fmt.Errorf("failed to update context: %w", err)
 		}
 
 		// Verify kubeconfig was created
 		if !utils.Exists(kubeconfig) {
-			mk.Cleanup()
+			mk.Cleanup(false)
 			return fmt.Errorf("kubeconfig not created: %s", kubeconfig)
 		}
+		utils.Debug("Kubeconfig verified: %s", kubeconfig)
 	}
 
 	return nil
 }
 
 // Cleanup stops Minikube
-func (mk *Minikube) Cleanup() error {
+func (mk *Minikube) Cleanup(debug bool) error {
 	fmt.Println("Stopping Minikube")
 
 	// Stop tunnel
 	if mk.tunnelProcess != nil {
+		utils.Debug("Stopping minikube tunnel (PID %d)", mk.tunnelProcess.Process.Pid)
 		mk.tunnelProcess.Process.Kill()
 		mk.tunnelProcess.Wait() // Wait for process to exit
 	}
@@ -135,7 +143,19 @@ func (mk *Minikube) Cleanup() error {
 		mk.tunnelOutput.Close()
 	}
 
+	// In debug mode, ask for confirmation before deleting cluster
+	if debug {
+		fmt.Print("\nDelete minikube cluster 'skewer'? (y/n): ")
+		var response string
+		fmt.Scanln(&response)
+		if response != "y" && response != "Y" {
+			fmt.Println("Cluster preserved for inspection")
+			return nil
+		}
+	}
+
 	// Delete Minikube profile
+	utils.Debug("Deleting minikube profile 'skewer'")
 	cmd := exec.Command("minikube", "delete", "-p", "skewer")
 	cmd.Run()
 
