@@ -140,9 +140,9 @@ steps:
     grpc-a:
     - run: kubectl wait --for condition=Ready site/grpc-a --timeout 240s
     grpc-b:
-    - run: kubectl wait --for condition=Ready site/grpc-b --timeout 120s
+    - run: kubectl wait --for condition=Ready site/grpc-b --timeout 240s
     grpc-c:
-    - run: kubectl wait --for condition=Ready site/grpc-c --timeout 120s
+    - run: kubectl wait --for condition=Ready site/grpc-c --timeout 240s
 - title: Install the Skupper command-line tool
   numbered: true
   preamble: 'This example uses the Skupper command-line tool to create Skupper

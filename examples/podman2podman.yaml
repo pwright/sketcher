@@ -62,6 +62,14 @@ steps:
           host: backend
         EOF
 
+- title: Copy west resources to skupper input directory
+  numbered: true
+  preamble: 'Copy the west site resources to the location where skupper expects them.'
+  commands:
+    west:
+    - run: mkdir -p $HOME/.local/share/skupper/namespaces/west/input/resources
+    - run: cp west/*.yaml $HOME/.local/share/skupper/namespaces/west/input/resources/
+
 - title: Bootstrap the west site
   numbered: true
   preamble: 'Bootstrap the west site using Podman. This will generate the static
@@ -82,7 +90,7 @@ steps:
     and 127.0.0.1:45671) plus a Secret with mTLS credentials.'
   commands:
     west:
-    - run: cp ~/.local/share/skupper/namespaces/west/runtime/links/link-west-127.0.0.1.yaml ./east/link-to-west.yaml
+    - run: cp $HOME/.local/share/skupper/namespaces/west/runtime/links/link-west-127.0.0.1.yaml ./east/link-to-west.yaml
 
 - title: Create the east site directory structure
   numbered: true

@@ -1,27 +1,20 @@
 """
-Sketcher - Python 3 framework for Skupper examples.
+Skewer - YAML processing and documentation generation for Skupper examples.
 
-A library for documenting and testing Skupper examples.
+A library for resolving standard YAML templates and generating documentation.
 """
 
-from .exceptions import SketcherError, SketcherProcessError, SketcherTimeout
+from .exceptions import SketcherError
 from .model import Model, Site, Step, Command
-from . import generator, executor, resolver, demo, kubernetes, minikube, kind
+from . import generator, resolver
 
-__version__ = "0.1.1"  # TODO (Nov 2026): Auto-read from pyproject.toml using tomllib after dropping Python 3.10 support
+__version__ = "0.2.0"  # Split: Python handles YAML processing, Go handles execution
 __all__ = [
     "SketcherError",
-    "SketcherProcessError",
-    "SketcherTimeout",
     "Model",
     "Site",
     "Step",
     "Command",
     "generator",
-    "executor",
     "resolver",
-    "demo",
-    "kubernetes",
-    "minikube",
-    "kind",
 ]

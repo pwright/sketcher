@@ -39,7 +39,7 @@ steps:
             STATUS: deployed
             REVISION: 1
         - await_resource: deployment/skupper-network-observer
-        - run: kubectl get secret skupper-network-observer-auth -o jsonpath='{.data.htpasswd}' | base64 -d | sed 's/\(.*\):{PLAIN}\(.*\)/Console credentials: \1 \/ \2/'
+        - run: # kubectl get secret skupper-network-observer-auth -o jsonpath='{.data.htpasswd}' | base64 -d | sed 's/\(.*\):{PLAIN}\(.*\)/Console credentials: \1 \/ \2/'
           output: |
             Console credentials: admin / password123
 

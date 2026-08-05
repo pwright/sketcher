@@ -1,0 +1,19 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tcp-go-echo
+spec:
+  selector:
+    matchLabels:
+      application: tcp-go-echo
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        application: tcp-go-echo
+    spec:
+      containers:
+        - image: quay.io/skupper/tcp-go-echo
+          name: tcp-go-echo
+          imagePullPolicy: IfNotPresent
