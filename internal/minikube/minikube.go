@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/skupperproject/sketcher/internal/kubernetes"
 	"github.com/skupperproject/sketcher/internal/model"
@@ -64,6 +65,7 @@ func (mk *Minikube) Setup() error {
 	}
 	mk.tunnelOutput = tunnelOutput
 
+	utils.Debug("Starting minikube tunnel for profile 'skewer'")
 	mk.tunnelProcess = exec.Command("minikube", "tunnel", "-p", "skewer")
 	mk.tunnelProcess.Stdout = tunnelOutput
 	mk.tunnelProcess.Stderr = tunnelOutput
@@ -75,6 +77,17 @@ func (mk *Minikube) Setup() error {
 	}
 
 	utils.Notice("Started minikube tunnel (PID %d)", mk.tunnelProcess.Process.Pid)
+	utils.Debug("Tunnel output: %s", tunnelOutputPath)
+
+	// Give tunnel a moment to initialize
+	utils.Debug("Waiting for tunnel to initialize...")
+	time.Sleep(2 * time.Second)
+
+	// Verify tunnel is still running
+	if mk.tunnelProcess.ProcessState != nil && mk.tunnelProcess.ProcessState.Exited() {
+		return fmt.Errorf("minikube tunnel exited immediately after starting - check %s for details", tunnelOutputPath)
+	}
+	utils.Debug("Tunnel process confirmed running")
 
 	// Load model to get sites
 	m, err := model.NewModel(mk.YAMLFile, nil)
@@ -133,10 +146,15 @@ func (mk *Minikube) Cleanup(debug bool) error {
 	fmt.Println("Stopping Minikube")
 
 	// Stop tunnel
-	if mk.tunnelProcess != nil {
+	if mk.tunnelProcess != nil && mk.tunnelProcess.Process != nil {
 		utils.Debug("Stopping minikube tunnel (PID %d)", mk.tunnelProcess.Process.Pid)
 		mk.tunnelProcess.Process.Kill()
 		mk.tunnelProcess.Wait() // Wait for process to exit
+	} else {
+		// Try to find and kill orphaned tunnel processes
+		utils.Debug("Checking for orphaned minikube tunnel processes")
+		cmd := exec.Command("pkill", "-f", "minikube tunnel.*skewer")
+		cmd.Run() // Ignore errors - process might not exist
 	}
 
 	if mk.tunnelOutput != nil {

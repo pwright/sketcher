@@ -276,8 +276,8 @@ func printDebugOutput(m *model.Model) {
 				fmt.Fprintln(os.Stderr)
 			}
 
-			fmt.Fprintln(os.Stderr, "skupper status:")
-			cmd := exec.Command("skupper", "status")
+			fmt.Fprintln(os.Stderr, "skupper site status:")
+			cmd := exec.Command("skupper", "site", "status")
 			cmd.Stdout = os.Stderr
 			cmd.Stderr = os.Stderr
 			cmd.Run()
