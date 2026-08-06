@@ -49,7 +49,7 @@ dev-install:
     fi
     if ! command -v skewer &> /dev/null; then
         echo "Installing skewer in development mode..."
-        pip install -e .
+        uv pip install -e .
     fi
 
 # Build sketcher (Go CLI) for current platform
