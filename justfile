@@ -18,6 +18,7 @@ default:
     @echo "Sketcher Development Tasks"
     @echo ""
     @echo "Quick Start:"
+    @echo "  just e2e          - End-to-end test: build + run sample YAML"
     @echo "  just build-all    - Build both skewer (Python) and sketcher (Go)"
     @echo "  just smoke-test   - Run smoke tests"
     @echo "  just version      - Show versions"
@@ -26,6 +27,9 @@ default:
     @echo "  just generate FILE          - Generate README from YAML"
     @echo "  just demo FILE             - Run demo (Minikube)"
     @echo "  just test-yaml FILE        - Run full test"
+    @echo "  just e2e-verbose FILE      - E2E test with verbose output"
+    @echo "  just e2e-kind FILE         - E2E test with Kind"
+    @echo "  just e2e-with-extensions   - E2E test including extension files"
     @echo ""
     @echo "All Recipes:"
     @just --list
@@ -36,11 +40,26 @@ install:
     uv pip install pyyaml pytest
 
 # Install skewer (Python CLI) in development mode
-dev-install: install
-    pip install -e .
+dev-install:
+    #!/usr/bin/env bash
+    if [ ! -d .venv ]; then
+        echo "Creating virtual environment..."
+        uv venv
+        uv pip install pyyaml pytest
+    fi
+    if ! command -v skewer &> /dev/null; then
+        echo "Installing skewer in development mode..."
+        pip install -e .
+    fi
 
 # Build sketcher (Go CLI) for current platform
 build-go:
+    go build -o ./bin/sketcher ./cmd/sketcher
+    @echo "Built: ./bin/sketcher"
+    @echo "Run with: ./bin/sketcher --help"
+
+# Build sketcher (legacy location for compatibility)
+build-go-legacy:
     go build -o ./sketcher-bin cmd/sketcher/main.go
     @echo "Built: ./sketcher-bin (rename to 'sketcher' when installing)"
 
@@ -110,27 +129,27 @@ generate-all:
 
 # Run steps from YAML
 run YAML="skewer.yaml" *KUBECONFIGS:
-    ./sketcher-bin run {{YAML}} {{KUBECONFIGS}}
+    ./bin/sketcher run {{YAML}} {{KUBECONFIGS}}
 
 # Demo with Minikube (default)
 demo YAML="skewer.yaml":
-    ./sketcher-bin demo {{YAML}}
+    ./bin/sketcher demo {{YAML}}
 
 # Demo with Kind
 demo-kind YAML="skewer.yaml":
-    ./sketcher-bin demo {{YAML}} --kind
+    ./bin/sketcher demo {{YAML}} --kind
 
 # Test with Minikube (default)
 test-yaml YAML="skewer.yaml":
-    ./sketcher-bin test {{YAML}}
+    ./bin/sketcher test {{YAML}}
 
 # Test with Kind
 test-kind YAML="skewer.yaml":
-    ./sketcher-bin test {{YAML}} --kind
+    ./bin/sketcher test {{YAML}} --kind
 
 # Extend running demo
 demo-extend EXTEND_FILE:
-    ./sketcher-bin demo-extend {{EXTEND_FILE}}
+    ./bin/sketcher demo-extend {{EXTEND_FILE}}
 
 # === Clean ===
 
@@ -149,6 +168,7 @@ clean-python:
 # Clean Go artifacts
 clean-go:
     rm -f sketcher-bin sketcher-linux-x64 sketcher-mac-arm64
+    rm -rf bin/
     rm -f sketcher/main
     go clean
 
@@ -185,7 +205,76 @@ version:
     @echo "Python (skewer):"
     @python -c "from sketcher import __version__; print(f'  {__version__}')"
     @echo "Go (sketcher):"
-    @if [ -f ./sketcher-bin ]; then ./sketcher-bin run 2>&1 | head -1 | sed 's/Sketcher /  /'; else echo "  (not built - run: just build-go)"; fi
+    @if [ -f ./bin/sketcher ]; then ./bin/sketcher run 2>&1 | head -1 | sed 's/Sketcher /  /'; elif [ -f ./sketcher-bin ]; then ./sketcher-bin run 2>&1 | head -1 | sed 's/Sketcher /  /'; else echo "  (not built - run: just build-go)"; fi
+
+# End-to-end test: build + run sample YAML (no extensions)
+e2e FILE="examples/skupper-example-hello-goodbye.yaml": dev-install
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "=== End-to-End Test ==="
+    echo "0. Cleaning up any existing skewer profile..."
+    minikube delete -p skewer 2>/dev/null || true
+    pkill -f "minikube tunnel.*skewer" 2>/dev/null || true
+    rm -rf /tmp/sketcher* 2>/dev/null || true
+    echo "  ✓ Cleanup complete"
+    echo "1. Building Go binary..."
+    go build -o bin/sketcher ./cmd/sketcher && echo "  ✓ Binary built: bin/sketcher"
+    echo "2. Running test with {{FILE}}..."
+    echo "   (Using Minikube, this will take a few minutes)"
+    ./bin/sketcher test "{{FILE}}" --no-extensions && echo "  ✓ Test passed!" || { echo "  ✗ Test failed"; exit 1; }
+    echo ""
+    echo "=== End-to-End Test Passed! ==="
+
+# End-to-end test with verbose output (no extensions)
+e2e-verbose FILE="examples/skupper-example-hello-goodbye.yaml": dev-install
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "=== End-to-End Test (Verbose) ==="
+    echo "0. Cleaning up any existing skewer profile..."
+    minikube delete -p skewer 2>/dev/null || true
+    pkill -f "minikube tunnel.*skewer" 2>/dev/null || true
+    rm -rf /tmp/sketcher* 2>/dev/null || true
+    echo "  ✓ Cleanup complete"
+    echo "1. Building Go binary..."
+    go build -o bin/sketcher ./cmd/sketcher && echo "  ✓ Binary built: bin/sketcher"
+    echo "2. Running test with {{FILE}} (verbose)..."
+    ./bin/sketcher test "{{FILE}}" --verbose --no-extensions && echo "  ✓ Test passed!" || { echo "  ✗ Test failed"; exit 1; }
+    echo ""
+    echo "=== End-to-End Test Passed! ==="
+
+# End-to-end test with Kind instead of Minikube (no extensions)
+e2e-kind FILE="examples/skupper-example-hello-goodbye.yaml": dev-install
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "=== End-to-End Test (Kind) ==="
+    echo "0. Cleaning up any existing skewer cluster..."
+    kind delete cluster --name skewer 2>/dev/null || true
+    rm -rf /tmp/sketcher* 2>/dev/null || true
+    echo "  ✓ Cleanup complete"
+    echo "1. Building Go binary..."
+    go build -o bin/sketcher ./cmd/sketcher && echo "  ✓ Binary built: bin/sketcher"
+    echo "2. Running test with {{FILE}} (Kind)..."
+    ./bin/sketcher test "{{FILE}}" --kind --no-extensions && echo "  ✓ Test passed!" || { echo "  ✗ Test failed"; exit 1; }
+    echo ""
+    echo "=== End-to-End Test Passed! ==="
+
+# End-to-end test WITH extensions (runs skewer-*.yaml files)
+e2e-with-extensions FILE="examples/skupper-example-hello-goodbye.yaml": dev-install
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "=== End-to-End Test (With Extensions) ==="
+    echo "0. Cleaning up any existing skewer profile..."
+    minikube delete -p skewer 2>/dev/null || true
+    pkill -f "minikube tunnel.*skewer" 2>/dev/null || true
+    rm -rf /tmp/sketcher* 2>/dev/null || true
+    echo "  ✓ Cleanup complete"
+    echo "1. Building Go binary..."
+    go build -o bin/sketcher ./cmd/sketcher && echo "  ✓ Binary built: bin/sketcher"
+    echo "2. Running test with {{FILE}} and extensions..."
+    echo "   (Using Minikube, this will take longer)"
+    ./bin/sketcher test "{{FILE}}" && echo "  ✓ Test with extensions passed!" || { echo "  ✗ Test failed"; exit 1; }
+    echo ""
+    echo "=== End-to-End Test (With Extensions) Passed! ==="
 
 # Run a simple smoke test
 smoke-test:
@@ -193,7 +282,7 @@ smoke-test:
     @echo "1. Testing skewer (Python)..."
     @skewer --help > /dev/null && echo "  ✓ skewer CLI works"
     @echo "2. Testing sketcher (Go)..."
-    @./sketcher-bin 2>&1 | grep -q "Usage:" && echo "  ✓ sketcher CLI works"
+    @if [ -f ./bin/sketcher ]; then ./bin/sketcher 2>&1 | grep -q "Usage:" && echo "  ✓ sketcher CLI works"; elif [ -f ./sketcher-bin ]; then ./sketcher-bin 2>&1 | grep -q "Usage:" && echo "  ✓ sketcher CLI works"; else echo "  ⚠ sketcher not built"; fi
     @echo "3. Testing Python imports..."
     @python -c "from sketcher import Model, resolver, generator; print('  ✓ Python imports work')"
     @echo "4. Testing model..."

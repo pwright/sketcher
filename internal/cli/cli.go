@@ -138,6 +138,7 @@ func executeTest() error {
 	verbose := fs.Bool("verbose", false, "Enable verbose debug output")
 	quiet := fs.Bool("quiet", false, "Suppress progress messages")
 	useKind := fs.Bool("kind", false, "Use Kind instead of Minikube")
+	noExtensions := fs.Bool("no-extensions", false, "Skip running extension files (skewer-*.yaml)")
 	fs.Parse(os.Args[2:])
 
 	configureLogging(*verbose, *quiet)
@@ -155,12 +156,12 @@ func executeTest() error {
 
 	if needsK8s {
 		if *useKind {
-			return testWithKind(yamlFile, *debug, *quiet)
+			return testWithKind(yamlFile, *debug, *quiet, *noExtensions)
 		}
-		return testWithMinikube(yamlFile, *debug, *quiet)
+		return testWithMinikube(yamlFile, *debug, *quiet, *noExtensions)
 	}
 
-	return testWithoutCluster(yamlFile, *debug, *quiet)
+	return testWithoutCluster(yamlFile, *debug, *quiet, *noExtensions)
 }
 
 func executeClean() error {
@@ -253,7 +254,7 @@ func runWithMinikube(yamlFile string, debug, quiet bool) error {
 	return executor.RunSteps(yamlFile, mk.Kubeconfigs, mk.WorkDir, debug, quiet)
 }
 
-func testWithKind(yamlFile string, debug, quiet bool) error {
+func testWithKind(yamlFile string, debug, quiet, noExtensions bool) error {
 	k, err := kind.New(yamlFile)
 	if err != nil {
 		return err
@@ -264,10 +265,10 @@ func testWithKind(yamlFile string, debug, quiet bool) error {
 		return err
 	}
 
-	return runTest(yamlFile, k.Kubeconfigs, k.WorkDir, debug, quiet)
+	return runTest(yamlFile, k.Kubeconfigs, k.WorkDir, debug, quiet, noExtensions)
 }
 
-func testWithMinikube(yamlFile string, debug, quiet bool) error {
+func testWithMinikube(yamlFile string, debug, quiet, noExtensions bool) error {
 	mk, err := minikube.New(yamlFile)
 	if err != nil {
 		return err
@@ -278,16 +279,16 @@ func testWithMinikube(yamlFile string, debug, quiet bool) error {
 		return err
 	}
 
-	return runTest(yamlFile, mk.Kubeconfigs, mk.WorkDir, debug, quiet)
+	return runTest(yamlFile, mk.Kubeconfigs, mk.WorkDir, debug, quiet, noExtensions)
 }
 
-func testWithoutCluster(yamlFile string, debug, quiet bool) error {
+func testWithoutCluster(yamlFile string, debug, quiet, noExtensions bool) error {
 	// Use /tmp directly to avoid macOS temp paths with special characters
 	workDir := "/tmp/sketcher-"
-	return runTest(yamlFile, nil, workDir, debug, quiet)
+	return runTest(yamlFile, nil, workDir, debug, quiet, noExtensions)
 }
 
-func runTest(yamlFile string, kubeconfigs []string, workDir string, debug, quiet bool) error {
+func runTest(yamlFile string, kubeconfigs []string, workDir string, debug, quiet, noExtensions bool) error {
 	// Check for skewer availability
 	if _, err := exec.LookPath("skewer"); err != nil {
 		return fmt.Errorf("test command requires 'skewer' to be installed (pip install sketcher)")
@@ -306,6 +307,11 @@ func runTest(yamlFile string, kubeconfigs []string, workDir string, debug, quiet
 	utils.Info("Running main steps...", quiet)
 	if err := executor.RunSteps(yamlFile, kubeconfigs, workDir, debug, quiet); err != nil {
 		return err
+	}
+
+	// Skip extensions if requested
+	if noExtensions {
+		return nil
 	}
 
 	// Find and run extension files
