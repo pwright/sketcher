@@ -68,6 +68,7 @@ func executeDemo() error {
 	verbose := fs.Bool("verbose", false, "Enable verbose debug output")
 	quiet := fs.Bool("quiet", false, "Suppress progress messages")
 	useKind := fs.Bool("kind", false, "Use Kind instead of Minikube")
+	useKindLB := fs.Bool("kind-lb", false, "Use Kind with MetalLB for LoadBalancer ingress")
 	fs.Parse(os.Args[2:])
 
 	configureLogging(*verbose, *quiet)
@@ -89,8 +90,8 @@ func executeDemo() error {
 	}
 
 	if len(kubeconfigs) == 0 && needsK8s {
-		if *useKind {
-			return runWithKind(yamlFile, *debug, *quiet)
+		if *useKind || *useKindLB {
+			return runWithKind(yamlFile, *debug, *quiet, *useKindLB)
 		}
 		return runWithMinikube(yamlFile, *debug, *quiet)
 	}
@@ -138,6 +139,7 @@ func executeTest() error {
 	verbose := fs.Bool("verbose", false, "Enable verbose debug output")
 	quiet := fs.Bool("quiet", false, "Suppress progress messages")
 	useKind := fs.Bool("kind", false, "Use Kind instead of Minikube")
+	useKindLB := fs.Bool("kind-lb", false, "Use Kind with MetalLB for LoadBalancer ingress")
 	noExtensions := fs.Bool("no-extensions", false, "Skip running extension files (skewer-*.yaml)")
 	fs.Parse(os.Args[2:])
 
@@ -155,8 +157,8 @@ func executeTest() error {
 	}
 
 	if needsK8s {
-		if *useKind {
-			return testWithKind(yamlFile, *debug, *quiet, *noExtensions)
+		if *useKind || *useKindLB {
+			return testWithKind(yamlFile, *debug, *quiet, *noExtensions, *useKindLB)
 		}
 		return testWithMinikube(yamlFile, *debug, *quiet, *noExtensions)
 	}
@@ -220,8 +222,8 @@ func checkNeedsKubernetes(yamlFile string) (bool, error) {
 	return false, nil
 }
 
-func runWithKind(yamlFile string, debug, quiet bool) error {
-	k, err := kind.New(yamlFile)
+func runWithKind(yamlFile string, debug, quiet, useMetalLB bool) error {
+	k, err := kind.New(yamlFile, useMetalLB)
 	if err != nil {
 		return err
 	}
@@ -254,8 +256,8 @@ func runWithMinikube(yamlFile string, debug, quiet bool) error {
 	return executor.RunSteps(yamlFile, mk.Kubeconfigs, mk.WorkDir, debug, quiet)
 }
 
-func testWithKind(yamlFile string, debug, quiet, noExtensions bool) error {
-	k, err := kind.New(yamlFile)
+func testWithKind(yamlFile string, debug, quiet, noExtensions, useMetalLB bool) error {
+	k, err := kind.New(yamlFile, useMetalLB)
 	if err != nil {
 		return err
 	}

@@ -101,6 +101,20 @@ sketcher test skewer.yaml
 sketcher demo skewer.yaml --verbose  # Show debug output (what's executing)
 sketcher demo skewer.yaml --debug    # Show debug output on failure
 sketcher demo skewer.yaml --quiet    # Suppress progress messages
+
+# Cluster provider options
+sketcher demo skewer.yaml --kind        # Use Kind with NodePort ingress
+sketcher demo skewer.yaml --kind-lb     # Use Kind with MetalLB (LoadBalancer ingress)
+sketcher test skewer.yaml --kind        # Use Kind for test runs
+sketcher test skewer.yaml --kind-lb     # Use Kind with LoadBalancer for tests
+
+# Note: Ingress type comparison
+#   - Minikube (default): LoadBalancer ingress
+#   - Kind (--kind): NodePort ingress
+#   - Kind (--kind-lb): LoadBalancer ingress via MetalLB
+# macOS users: Kind requires Docker Desktop or Colima to be running
+#   - Docker Desktop: NodePort works out-of-the-box
+#   - Colima: Start with `colima start --network-address` for direct NodePort access
 ```
 
 **Note:** The `sketcher test` command requires both tools - it calls `skewer generate` to create documentation, then runs the execution steps.
@@ -554,7 +568,50 @@ For new examples, use the common step patterns shown above rather than relying o
 
 ## Running against existing clusters
 
-By default, `sketcher demo` and `sketcher run` start a local Minikube instance automatically and use it for all Kubernetes sites. If you want to run against your own clusters instead, pass kubeconfig file paths as positional arguments.
+By default, `sketcher demo` and `sketcher run` start a local Minikube instance automatically and use it for all Kubernetes sites. You can use Kind instead with the `--kind` flag, or run against your own clusters by passing kubeconfig file paths as positional arguments.
+
+**Cluster provider comparison:**
+- **Minikube** (default) - Uses LoadBalancer ingress, slower startup, higher resource usage
+- **Kind** (`--kind` flag) - Uses NodePort ingress, faster startup, lower resource usage, better for CI/CD
+  - **macOS prerequisite**: Requires Docker Desktop or Colima to be running for port forwarding
+    - Docker Desktop: Works out-of-the-box
+    - Colima: Start with `colima start --network-address` for direct NodePort access
+- **Kind with MetalLB** (`--kind-lb` flag) - Uses LoadBalancer ingress like Minikube, but with Kind's speed
+  - Automatically installs and configures MetalLB
+  - No need for `--ingress nodeport` in Skupper commands (uses standard LoadBalancer)
+  - Best of both: Kind's speed + LoadBalancer ingress compatibility
+
+**Configuring Skupper for different cluster providers:**
+
+The Skupper configuration depends on which cluster provider and ingress type you're using:
+
+```yaml
+# Minikube (default) - LoadBalancer ingress:
+- run: skupper site create west --enable-link-access
+
+# Kind with --kind-lb flag - LoadBalancer via MetalLB (same as Minikube):
+- run: skupper site create west --enable-link-access
+
+# Kind with --kind flag - NodePort ingress:
+- run: skupper site create west --ingress nodeport --ingress-host localhost --enable-link-access
+```
+
+**When to use `--ingress nodeport`:**
+- Only needed with `--kind` flag (NodePort mode)
+- NOT needed with `--kind-lb` flag (MetalLB provides LoadBalancer)
+- NOT needed with default Minikube
+
+**Example for Kind with NodePort (`--kind`):**
+
+```yaml
+commands:
+  west:
+    - run: skupper site create west --ingress nodeport --ingress-host localhost --enable-link-access
+  east:
+    - run: skupper site create east --ingress nodeport --ingress-host localhost
+```
+
+**Note:** This project uses Skupper v2 syntax. The old `skupper init` command from v1 is deprecated and no longer works. Always use `skupper site create`.
 
 Kubeconfigs are assigned to Kubernetes sites **in the order the sites are defined** in `skewer.yaml`. For example, given this site definition:
 
