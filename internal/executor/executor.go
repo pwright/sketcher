@@ -184,6 +184,10 @@ func runStep(m *model.Model, step *model.Step, workDir string, check, quiet bool
 				if command.Run != "" {
 					cmdStr := strings.ReplaceAll(command.Run, "~", workDir)
 
+					// Track if we need to wait for LoadBalancer after this command
+					shouldWaitForLB := strings.Contains(cmdStr, "skupper site create") &&
+						strings.Contains(cmdStr, "--enable-link-access")
+
 					// Auto-inject platform flag for skupper commands on non-kubernetes platforms
 					if site.Platform != "kubernetes" && strings.Contains(cmdStr, "skupper ") {
 						// Only inject if -p/--platform is not already present
@@ -236,6 +240,15 @@ func runStep(m *model.Model, step *model.Step, workDir string, check, quiet bool
 
 					if check && err != nil {
 						return fmt.Errorf("command failed in %s: %v", stepString(step), err)
+					}
+
+					// After successful skupper site create --enable-link-access, wait for LoadBalancer
+					if err == nil && shouldWaitForLB && site.Platform == "kubernetes" {
+						utils.Debug("Waiting for skupper-router LoadBalancer to get external IP...")
+						if _, lbErr := kubernetes.AwaitIngress("service/skupper-router", 60, quiet); lbErr != nil {
+							utils.Notice("Warning: LoadBalancer external IP not ready yet: %v", lbErr)
+							utils.Notice("This may cause link creation to fail on macOS/minikube")
+						}
 					}
 				}
 			}

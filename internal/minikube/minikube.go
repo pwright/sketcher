@@ -79,9 +79,9 @@ func (mk *Minikube) Setup() error {
 	utils.Notice("Started minikube tunnel (PID %d)", mk.tunnelProcess.Process.Pid)
 	utils.Debug("Tunnel output: %s", tunnelOutputPath)
 
-	// Give tunnel a moment to initialize
+	// Give tunnel time to initialize - macOS needs longer than Linux
 	utils.Debug("Waiting for tunnel to initialize...")
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	// Verify tunnel is still running
 	if mk.tunnelProcess.ProcessState != nil && mk.tunnelProcess.ProcessState.Exited() {
