@@ -66,6 +66,9 @@ func (k *Kind) Setup() error {
 	utils.Debug("Creating Kind config file: %s", kindConfig)
 	configContent := `kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  ipFamily: ipv4
+  disableDefaultCNI: false
 nodes:
 - role: control-plane
   extraPortMappings:
@@ -182,14 +185,19 @@ func (k *Kind) installMetalLB() error {
 		utils.Warn("MetalLB pods not ready yet, continuing anyway")
 	}
 
-	// Get Docker network subnet
+	// Get Docker network subnet (IPv4 only)
 	utils.Debug("Detecting Kind Docker network subnet")
-	cmd = exec.Command("docker", "network", "inspect", "kind", "--format", "{{ (index .IPAM.Config 0).Subnet }}")
+	cmd = exec.Command("docker", "network", "inspect", "kind", "--format", "{{ range .IPAM.Config }}{{ if not (contains .Subnet \":\") }}{{ .Subnet }}{{ end }}{{ end }}")
 	output, err := cmd.Output()
 	if err != nil {
 		return fmt.Errorf("failed to get Docker network subnet: %w", err)
 	}
 	subnet := strings.TrimSpace(string(output))
+	if subnet == "" {
+		// Fallback: use default Docker bridge range
+		subnet = "172.18.0.0/16"
+		utils.Warn("No IPv4 subnet found in Kind network, using default: %s", subnet)
+	}
 	utils.Debug("Kind Docker subnet: %s", subnet)
 
 	// Extract IP range from subnet (e.g., 172.18.0.0/16 -> 172.18.255.200-172.18.255.250)
