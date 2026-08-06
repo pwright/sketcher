@@ -162,7 +162,7 @@ steps:
 - title: Deploy the TCP echo server
   commands:
     public:
-    - run: kubectl apply -f ./public-deployment.yaml
+    - run: kubectl apply -f ./public/tcp-echo-deployment.yaml
 - title: Create your sites
   numbered: true
   preamble: 'A Skupper _site_ is a location where your application workloads
@@ -299,7 +299,7 @@ steps:
 - commands:
     public:
     - run: skupper site delete --all
-    - run: kubectl delete -f ./public-deployment.yaml
+    - run: kubectl delete -f ./public/tcp-echo-deployment.yaml
     private:
     - run: skupper site delete --all
   name: cleaning_up

@@ -2,9 +2,13 @@
 
 [![main](https://github.com/skupperproject/skewer/actions/workflows/main.yaml/badge.svg)](https://github.com/skupperproject/skewer/actions/workflows/main.yaml)
 
-A Python 3 native framework for documenting and testing Skupper examples
+A framework for documenting and testing Skupper examples
 
-Sketcher takes `skewer.yaml` configuration files and generates both documentation (README.md) and automated test routines for Skupper example applications. It's a modern Python 3 rewrite of Skewer with zero dependencies beyond PyYAML.
+Sketcher uses two command-line tools:
+- **`skewer`** (Python) - YAML processing and documentation generation
+- **`sketcher`** (Go) - Execution engine for running tests and demos
+
+Both tools work with `skewer.yaml` configuration files to automate Skupper example documentation and testing.
 
 #### Contents
 
@@ -34,18 +38,39 @@ Additional real-world examples are available in the [sketcher_yamls](../sketcher
 
 ## Setting up Sketcher for your own example
 
-**Install Sketcher:**
+**Install both tools:**
 
 ```bash
-# Install from source (PyPI package coming soon)
-cd /path/to/sketcher
+# Install skewer (Python - for YAML processing and doc generation)
 pip install sketcher
+
+# Install sketcher (Go - for execution)
+# Option 1: Use pre-built binaries
+cd /path/to/sketcher
+sudo cp sketcher-linux-x64 /usr/local/bin/sketcher     # Linux
+# or
+sudo cp sketcher-mac-arm64 /usr/local/bin/sketcher     # macOS (Apple Silicon)
+
+# Option 2: Build from source
+go build -o sketcher cmd/sketcher/main.go
+sudo mv sketcher /usr/local/bin/
+```
+
+**Development builds:**
+
+```bash
+# Build for current platform
+just build-go
+
+# Build for all platforms (Linux x64, macOS ARM64)
+just build-go-all
 ```
 
 **Verify installation:**
 
 ```bash
-python -m sketcher --help
+skewer --help       # Python tool (resolve, generate, clean)
+sketcher --help     # Go tool (run, demo, test, clean)
 ```
 
 **Create your Skupper example:**
@@ -63,20 +88,22 @@ Create a `skewer.yaml` file describing your example:
 **Generate README and test:**
 
 ```bash
-# Generate README.md from your skewer.yaml
-python -m sketcher generate skewer.yaml
+# Generate README.md from your skewer.yaml (Python tool)
+skewer generate skewer.yaml
 
-# Run the example steps in demo mode (pauses before cleanup)
-python -m sketcher demo skewer.yaml
+# Run the example steps in demo mode (pauses before cleanup) (Go tool)
+sketcher demo skewer.yaml
 
-# Run full automated test (no pause)
-python -m sketcher test skewer.yaml
+# Run full automated test (no pause) (Go tool)
+sketcher test skewer.yaml
 
 # Debugging flags (works with demo, run, test commands)
-python -m sketcher demo skewer.yaml --verbose  # Show debug output (what's executing)
-python -m sketcher demo skewer.yaml --debug    # Show debug output on failure
-python -m sketcher demo skewer.yaml --quiet    # Suppress progress messages
+sketcher demo skewer.yaml --verbose  # Show debug output (what's executing)
+sketcher demo skewer.yaml --debug    # Show debug output on failure
+sketcher demo skewer.yaml --quiet    # Suppress progress messages
 ```
+
+**Note:** The `sketcher test` command requires both tools - it calls `skewer generate` to create documentation, then runs the execution steps.
 
 ## Sketcher YAML
 
@@ -353,7 +380,7 @@ For more complete examples, see the [sketcher_yamls](../sketcher_yamls/) directo
 
 Sketcher has a demo mode where it executes all the steps, but before cleaning up and exiting, it pauses so you can inspect and interact with the running application.
 
-When you run `python -m sketcher demo skewer.yaml`, after all steps complete successfully, Sketcher displays connection information and waits:
+When you run `sketcher demo skewer.yaml`, after all steps complete successfully, Sketcher displays connection information and waits:
 
 ```
 Demo time!
@@ -392,7 +419,7 @@ The `demo-extend` command allows you to attach to a running demo and execute add
 In one terminal, start the demo:
 
 ```console
-$ python -m sketcher demo skewer.yaml
+$ sketcher demo skewer.yaml
 ```
 
 The demo will execute all setup steps and then pause, displaying connection information.
@@ -400,9 +427,9 @@ The demo will execute all setup steps and then pause, displaying connection info
 In a separate terminal, run additional test scenarios:
 
 ```console
-$ python -m sketcher demo-extend skewer-extend-observability.yaml
-$ python -m sketcher demo-extend skewer-extend-scaling.yaml
-$ python -m sketcher demo-extend skewer-extend-chaos.yaml
+$ sketcher demo-extend skewer-extend-observability.yaml
+$ sketcher demo-extend skewer-extend-scaling.yaml
+$ sketcher demo-extend skewer-extend-chaos.yaml
 ```
 
 Each `demo-extend` invocation:
@@ -445,7 +472,7 @@ The `test` command automatically discovers and runs all test scenarios in a sing
 **Usage:**
 
 ```console
-$ python -m sketcher test skewer.yaml
+$ sketcher test skewer.yaml
 ```
 
 This command:
@@ -483,7 +510,7 @@ jobs:
           pip install pyyaml
           pip install -e /path/to/sketcher
       - name: Run all tests
-        run: python -m sketcher test skewer.yaml
+        run: sketcher test skewer.yaml
 ```
 
 The `test` command runs all extension files automatically, in alphabetical order.
@@ -495,18 +522,18 @@ The `test` command runs all extension files automatically, in alphabetical order
 
 ## Migration from Skewer
 
-If you have existing Skewer YAML files that use `standard:` step references, Sketcher provides a migration tool to expand them into explicit YAML:
+If you have existing Skewer YAML files that use `standard:` step references, use the `skewer resolve` command to expand them into explicit YAML:
 
 ```bash
 # Expand standard steps
-python -m sketcher resolve old-skewer.yaml -o new-skewer.yaml
+skewer resolve old-skewer.yaml -o new-skewer.yaml
 
 # Or modify in-place
-python -m sketcher resolve skewer.yaml --in-place
+skewer resolve skewer.yaml --in-place
 
 # Batch process multiple files
 for f in examples/*/skewer.yaml; do
-  python -m sketcher resolve "$f" --in-place
+  skewer resolve "$f" --in-place
 done
 ```
 
@@ -527,7 +554,7 @@ For new examples, use the common step patterns shown above rather than relying o
 
 ## Running against existing clusters
 
-By default, `python -m sketcher demo` and `python -m sketcher run` start a local Minikube instance automatically and use it for all Kubernetes sites. If you want to run against your own clusters instead, pass kubeconfig file paths as positional arguments.
+By default, `sketcher demo` and `sketcher run` start a local Minikube instance automatically and use it for all Kubernetes sites. If you want to run against your own clusters instead, pass kubeconfig file paths as positional arguments.
 
 Kubeconfigs are assigned to Kubernetes sites **in the order the sites are defined** in `skewer.yaml`. For example, given this site definition:
 
@@ -555,13 +582,13 @@ minikube -p east kubeconfig > ~/.kube/config-east-minikube
 Then pass the kubeconfigs in site order (west first, east second):
 
 ```bash
-python -m sketcher demo skewer.yaml ~/.kube/config-west-openshift ~/.kube/config-east-minikube
+sketcher demo skewer.yaml ~/.kube/config-west-openshift ~/.kube/config-east-minikube
 ```
 
 Or equivalently for `run`:
 
 ```bash
-python -m sketcher run skewer.yaml ~/.kube/config-west-openshift ~/.kube/config-east-minikube
+sketcher run skewer.yaml ~/.kube/config-west-openshift ~/.kube/config-east-minikube
 ```
 
 The provided kubeconfigs override the paths in `skewer.yaml` at runtime — the `skewer.yaml` file itself is not modified. Each kubeconfig must already be authenticated and have the correct namespace context set before running.
@@ -593,7 +620,7 @@ If `python -m sketcher` fails with "No module named sketcher", ensure you instal
 ```bash
 cd /path/to/sketcher
 pip install sketcher
-python -m sketcher --help
+skewer --help && sketcher --help
 ```
 
 ### Resolver fails on old Skewer YAML

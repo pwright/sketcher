@@ -1,0 +1,19 @@
+# Invalid skewer.yaml - demonstrates schema validation errors
+title: Invalid Example
+extra_field: This will fail validation  # ❌ Unknown field
+sites:
+  bad_site:
+    platform: k8s  # ❌ Invalid platform (should be 'kubernetes')
+    namespace: MyNamespace  # ❌ Invalid namespace (uppercase not allowed)
+    env:
+      KUBECONFIG: ~/.kube/config
+steps:
+  - title: Missing required fields test
+    commands:
+      bad_site:
+        - run: echo "test"
+          apply: both  # ❌ Invalid apply value (should be 'readme' or 'test')
+  # ❌ Step without title
+  - commands:
+      bad_site:
+        - run: echo "no title"
