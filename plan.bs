@@ -1,0 +1,171 @@
+{
+"id": "sketcher-architecture",
+"title": "Sketcher Testing Framework",
+"abstract": "Sketcher enables users to test and document Skupper multi-site deployments through declarative YAML files. Users define sites (Kubernetes, Podman, Docker) and steps, then Sketcher generates documentation (Python tool) and executes tests (Go tool) across multiple clusters/platforms, managing cluster lifecycle, networking, and cleanup.",
+"categories": [
+{
+"id": "user-workflows",
+"title": "User Workflows",
+"items": [
+{
+"id": "demo-extensions",
+"name": "Demo Extensions",
+"deps": [
+"sketcher-go"
+],
+"color": "#4CAF50"
+},
+{
+"id": "automated-testing",
+"name": "CI/CD Testing",
+"deps": [
+"skewer-python",
+"sketcher-go"
+],
+"external": "[https://github.com/pwright/sketcher#cicd-integration](https://github.com/pwright/sketcher#cicd-integration)"
+},
+{
+"id": "documentation",
+"name": "README Generation",
+"deps": [
+"skewer-python"
+]
+}
+]
+},
+{
+"id": "core-tools",
+"title": "Tools",
+"items": [
+{
+"id": "skewer-python",
+"name": "skewer (Python)",
+"deps": [
+"skewer-yaml"
+],
+"external": "[https://github.com/pwright/sketcher/tree/main/sketcher](https://github.com/pwright/sketcher/tree/main/sketcher)"
+},
+{
+"id": "sketcher-go",
+"name": "sketcher (Go)",
+"deps": [
+"step-orchestrator",
+"cluster-manager",
+"cleanup-system"
+],
+"external": "[https://github.com/pwright/sketcher/tree/main/cmd/sketcher](https://github.com/pwright/sketcher/tree/main/cmd/sketcher)"
+},
+{
+"id": "skewer-yaml",
+"name": "skewer.yaml Config",
+"deps": [],
+"external": "[https://github.com/pwright/sketcher#sketcher-yaml](https://github.com/pwright/sketcher#sketcher-yaml)"
+}
+]
+},
+{
+"id": "platform-layer",
+"title": "Platform Providers",
+"items": [
+{
+"id": "kind-provider",
+"name": "Kind Clusters",
+"deps": [
+"kubectl-cli",
+"yaml"
+],
+"external": "[https://kind.sigs.k8s.io/](https://kind.sigs.k8s.io/)",
+"color": "#4CAF50"
+},
+{
+"id": "podman-provider",
+"name": "Podman Sites",
+"deps": [
+"skupper-cli",
+"yaml"
+],
+"external": "[https://podman.io/](https://podman.io/)"
+},
+{
+"id": "external-clusters",
+"name": "External Kubeconfigs",
+"deps": [
+"kubectl-cli"
+]
+},
+{
+"id": "minikube-provider",
+"name": "Minikube Clusters",
+"deps": [
+"kubectl-cli",
+"yaml"
+],
+"external": "[https://minikube.sigs.k8s.io/](https://minikube.sigs.k8s.io/)"
+}
+]
+},
+{
+"id": "execution-layer",
+"title": "Execution Layer",
+"items": [
+{
+"id": "step-orchestrator",
+"name": "Step Orchestrator",
+"deps": [
+"kubectl-cli",
+"skupper-cli",
+"await-system"
+]
+},
+{
+"id": "cluster-manager",
+"name": "Cluster Manager",
+"deps": [
+"kind-provider",
+"minikube-provider",
+"podman-provider",
+"external-clusters"
+]
+},
+{
+"id": "await-system",
+"name": "Resource Awaiter",
+"deps": [
+"kubectl-cli"
+]
+},
+{
+"id": "cleanup-system",
+"name": "Cleanup Handler",
+"deps": [
+"kubectl-cli",
+"skupper-cli"
+]
+}
+]
+},
+{
+"id": "foundation",
+"title": "User story",
+"items": [
+{
+"id": "kubectl-cli",
+"name": "kubectl",
+"deps": [],
+"external": "[https://kubernetes.io/docs/reference/kubectl/](https://kubernetes.io/docs/reference/kubectl/)"
+},
+{
+"id": "skupper-cli",
+"name": "Skupper CLI",
+"deps": [],
+"external": "[https://skupper.io/](https://skupper.io/)"
+},
+{
+"id": "yaml",
+"name": "YAML definitions (site, connectors, listeners)",
+"deps": []
+}
+]
+}
+]
+}
