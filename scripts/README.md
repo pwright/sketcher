@@ -13,6 +13,9 @@ Utility scripts for maintaining and validating Skupper example YAML files.
 # Reformat all YAML files
 ./scripts/reformat-all.sh
 
+# Only generate markdown (skip reformatting)
+./scripts/reformat-all.sh --generate-only
+
 # Reformat and generate markdown in one step
 ./scripts/reformat-all.sh --generate-md
 
@@ -143,7 +146,8 @@ All-in-one script to reformat all YAML files and optionally generate markdown.
 ### Options
 
 - `--dry-run` - Show what would change without modifying files
-- `--generate-md` - Also generate README.md files after reformatting
+- `--generate-only` - Only generate markdown files, skip reformatting YAML
+- `--generate-md` - Reformat YAML and then generate markdown files
 - `--validate` - Only validate files against schema, don't reformat
 - `-h, --help` - Show help message
 

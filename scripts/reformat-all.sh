@@ -18,6 +18,7 @@ NC='\033[0m' # No Color
 DRY_RUN=false
 GENERATE_MD=false
 VALIDATE_ONLY=false
+GENERATE_ONLY=false
 
 usage() {
     cat << EOF
@@ -26,15 +27,17 @@ Usage: $0 [OPTIONS]
 Reformat all YAML example files to use clean literal block style (|)
 
 OPTIONS:
-    --dry-run       Show what would be changed without modifying files
-    --generate-md   Also generate README.md files after reformatting
-    --validate      Only validate files, don't reformat
-    -h, --help      Show this help message
+    --dry-run         Show what would be changed without modifying files
+    --generate-md     Also generate README.md files after reformatting
+    --generate-only   Only generate markdown files, skip reformatting
+    --validate        Only validate files, don't reformat
+    -h, --help        Show this help message
 
 EXAMPLES:
     $0                          # Reformat all YAML files
     $0 --dry-run                # Preview changes
     $0 --generate-md            # Reformat and generate markdown
+    $0 --generate-only          # Just generate markdown from existing YAML
     $0 --validate               # Just validate against schema
 
 EOF
@@ -49,6 +52,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --generate-md)
             GENERATE_MD=true
+            shift
+            ;;
+        --generate-only)
+            GENERATE_ONLY=true
             shift
             ;;
         --validate)
@@ -87,6 +94,44 @@ if [ "$VALIDATE_ONLY" = true ]; then
     python3 scripts/validate-schema.py examples/*.yaml
     echo
     echo -e "${GREEN}✓ Validation complete${NC}"
+    exit 0
+fi
+
+# Generate only mode
+if [ "$GENERATE_ONLY" = true ]; then
+    echo -e "${BLUE}Generating Markdown Documentation Only${NC}"
+    echo -e "${BLUE}---------------------------------------${NC}"
+    echo
+
+    COUNT=0
+    ERRORS=0
+
+    for yaml_file in examples/skupper-example-*.yaml; do
+        if [ -f "$yaml_file" ]; then
+            basename="$(basename "$yaml_file" .yaml)"
+            output_file="examples/${basename}.md"
+            echo -n "  Processing $basename... "
+
+            if skewer generate "$yaml_file" -o "$output_file" 2>&1 | grep -q "Generated"; then
+                echo -e "${GREEN}✓${NC}"
+                COUNT=$((COUNT + 1))
+            else
+                echo -e "${YELLOW}⚠${NC}"
+                ERRORS=$((ERRORS + 1))
+            fi
+        fi
+    done
+
+    echo
+    echo -e "${GREEN}✓ Generated markdown for $COUNT files${NC}"
+    if [ $ERRORS -gt 0 ]; then
+        echo -e "${YELLOW}⚠ $ERRORS files had warnings or errors${NC}"
+    fi
+
+    echo
+    echo -e "${BLUE}==================================================================${NC}"
+    echo -e "${GREEN}Markdown generation complete!${NC}"
+    echo -e "${BLUE}==================================================================${NC}"
     exit 0
 fi
 
