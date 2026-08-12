@@ -1,6 +1,6 @@
 <!-- NOTE: This file is generated from skewer.yaml.  Do not edit it directly. -->
 
-# Skupper Hello World
+# Skupper Hello World using YAML
 
 [![main](https://github.com/pwright/sketcher/actions/workflows/main.yaml/badge.svg)](https://github.com/pwright/sketcher/actions/workflows/main.yaml)
 
@@ -20,23 +20,19 @@ across cloud providers, data centers, and edge sites.
 * [Sites](#sites)
 * [Step 1: Access your Kubernetes clusters](#step-1-access-your-kubernetes-clusters)
 * [Step 2: Create your Kubernetes namespaces](#step-2-create-your-kubernetes-namespaces)
-* [Step 3: Deploy the frontend and backend](#step-3-deploy-the-frontend-and-backend)
-* [Step 4: Install Skupper on your Kubernetes clusters](#step-4-install-skupper-on-your-kubernetes-clusters)
-* [Step 5: Install the Skupper command-line tool](#step-5-install-the-skupper-command-line-tool)
-* [Step 6: Create your sites](#step-6-create-your-sites)
-* [Step 7: Link your sites](#step-7-link-your-sites)
-* [Step 8: Expose the backend service](#step-8-expose-the-backend-service)
-* [Step 9: Expose the backend metrics service](#step-9-expose-the-backend-metrics-service)
-* [Step 10: Access the frontend service](#step-10-access-the-frontend-service)
+* [Step 3: Install Skupper on your Kubernetes clusters](#step-3-install-skupper-on-your-kubernetes-clusters)
+* [Step 4: Apply your YAML resources](#step-4-apply-your-yaml-resources)
+* [Step 5: Link your sites](#step-5-link-your-sites)
+* [Step 6: Access the frontend service](#step-6-access-the-frontend-service)
 * [Cleaning up](#cleaning-up)
-* [Summary](#summary)
 * [Next steps](#next-steps)
 * [About this example](#about-this-example)
 
 ## Overview
 
-This example is a very simple multi-service HTTP application
-deployed across Kubernetes clusters using Skupper.
+This example is a variant of [Skupper Hello World][hello-world] that
+is deployed using YAML custom resources instead of imperative
+commands.
 
 It contains two services:
 
@@ -47,11 +43,17 @@ It contains two services:
 * A frontend service that sends greetings to the backend and
   fetches new greetings in response.
 
-With Skupper, you can place the backend in one cluster and the
+In this scenario, each service runs in a different Kubernetes
+cluster.  The frontend runs in a namespace on cluster 1 called West,
+and the backend runs in a namespace on cluster 2 called East.
+
+<img src="images/entities.svg" width="640"/>
+
+Skupper enables you to place the backend in one cluster and the
 frontend in another and maintain connectivity between the two
 services without exposing the backend to the public internet.
 
-<img src="images/entities.svg" width="640"/>
+[hello-world]: https://github.com/skupperproject/skupper-example-hello-world
 
 ## Prerequisites
 
@@ -139,27 +141,7 @@ kubectl create namespace east
 kubectl config set-context --current --namespace east
 ~~~
 
-## Step 3: Deploy the frontend and backend
-
-Deploy the Hello World components, placing the frontend on one
-cluster and the backend on the other.
-
-Use `kubectl create deployment` to deploy the frontend in West
-and the backend in East.
-
-_**West:**_
-
-~~~ shell
-kubectl create deployment frontend --image quay.io/pwright/getback:hc
-~~~
-
-_**East:**_
-
-~~~ shell
-kubectl create deployment backend --image quay.io/pwright/getback:hc --replicas 3
-~~~
-
-## Step 4: Install Skupper on your Kubernetes clusters
+## Step 3: Install Skupper on your Kubernetes clusters
 
 Using Skupper on Kubernetes requires the installation of the
 Skupper custom resource definitions (CRDs) and the Skupper
@@ -180,95 +162,251 @@ _**East:**_
 kubectl apply -f https://skupper.io/v2/install.yaml
 ~~~
 
-## Step 5: Install the Skupper command-line tool
+## Step 4: Apply your YAML resources
 
-This example uses the Skupper command-line tool to create Skupper
-resources.  You need to install the `skupper` command only once
-for each development environment.
+To configure our example sites and service bindings, we are
+using the following resources:
 
-On Linux or Mac, you can use the install script (inspect it
-[here][install-script]) to download and extract the command:
+West:
 
-~~~ shell
-curl https://skupper.io/v2/install.sh | sh
+* [site.yaml](west/site.yaml) - The Skupper _Site_ resource for
+  West
+* [frontend.yaml](west/frontend.yaml) - The Hello World frontend
+  deployment
+* [listener.yaml](west/listener.yaml) - A Skupper _Listener_
+  resource for exposing the backend in East to the local
+  frontend
+
+East:
+
+* [site.yaml](east/site.yaml) - The Skupper _Site_ resource for
+  East
+* [backend.yaml](east/backend.yaml) - The Hello World backend
+  deployment
+* [connector.yaml](east/connector.yaml) - A Skupper _Connector_
+  resource for binding the backend to the listener in West
+
+Let's look at these resources in more detail.
+
+### Resources in West
+
+The _Site_ resource defines a Skupper site for its associated
+Kubernetes namespace.  This is where you set site configuration
+options.  See the [Site resource reference][site-config] for
+more information.
+
+The `linkAccess: default` field configures site West to accept
+site-to-site links.  This example creates a link from East to
+West, so the receiving side, West, must enable link access.
+
+[site-config]: https://skupperproject.github.io/refdog/resources/site.html
+
+[site.yaml](west/site.yaml):
+
+~~~ yaml
+apiVersion: skupper.io/v1alpha1
+kind: Site
+metadata:
+  name: west
+  namespace: west
+spec:
+  linkAccess: default
 ~~~
 
-The script installs the command under your home directory.  It
-prompts you to add the command to your path if necessary.
+The frontend is a standard Kubernetes deployment.
 
-For Windows and other installation options, see [Installing
-Skupper][install-docs].
+[frontend.yaml](west/frontend.yaml):
 
-[install-script]: https://github.com/skupperproject/skupper-website/blob/main/input/install.sh
-[install-docs]: https://skupper.io/#installation
+~~~ yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  selector:
+    matchLabels:
+      app: frontend
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: quay.io/skupper/hello-world-frontend
+          ports:
+            - containerPort: 8080
+~~~
 
-## Step 6: Create your sites
+The code in frontend makes API calls to
+`http://backend:8080/api/hello`.  The _Listener_ resource below
+configures the router to expose a connection endpoint at
+`backend:8080` and forward any connections there to routers in
+remote sites using the routing key `backend`.  See the [Listener
+resource reference][listener-config] for more information.
 
-A Skupper _site_ is a location where your application workloads
-are running.  Sites are linked together to form a network for your
-application.
+[listener-config]: https://skupperproject.github.io/refdog/resources/listener.html
 
-For each namespace, use `skupper site create` with a site name of
-your choice.  This creates the site resource and deploys the
-Skupper router to the namespace.
+[listener.yaml](west/listener.yaml):
 
-**Note:** If you are using Minikube, you need to [start minikube
-tunnel][minikube-tunnel] before you run `skupper site create`.
+~~~ yaml
+apiVersion: skupper.io/v1alpha1
+kind: Listener
+metadata:
+  name: backend
+  namespace: west
+spec:
+  port: 8080
+  host: backend
+  routingKey: backend
+~~~
 
-<!-- XXX Explain enabling link acesss on one of the sites -->
+### Resources in East
+
+The _Site_ resource for East.
+
+[site.yaml](east/site.yaml):
+
+~~~ yaml
+apiVersion: skupper.io/v1alpha1
+kind: Site
+metadata:
+  name: east
+  namespace: east
+~~~
+
+The backend is a standard Kubernetes deployment.
+
+[backend.yaml](east/backend.yaml):
+
+~~~ yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: quay.io/skupper/hello-world-backend
+          ports:
+            - containerPort: 8080
+~~~
+
+The _Connector_ resource below configures the router to take
+remote connections with routing key `backend` and forward them
+to port 8080 on pods matching the selector `app=backend`.  See
+the [Connector resource reference][connector-config] for more
+information.
+
+[connector-config]: https://skupperproject.github.io/refdog/resources/connector.html
+
+[connector.yaml](east/connector.yaml):
+
+~~~ yaml
+apiVersion: skupper.io/v1alpha1
+kind: Connector
+metadata:
+  name: backend
+  namespace: east
+spec:
+  routingKey: backend
+  port: 8080
+  selector: app=backend
+~~~
+
+### Applying the resources
+
+Now we're ready to apply everything.  Use the `kubectl apply`
+command with the resources for each site.
+
+**Note:** If you are using Minikube, [you need to start
+`minikube tunnel`][minikube-tunnel] before you create the
+Skupper sites.
 
 [minikube-tunnel]: https://skupper.io/start/minikube.html#running-minikube-tunnel
 
 _**West:**_
 
 ~~~ shell
-skupper site create west --enable-link-access
+kubectl apply -f west/site.yaml -f west/frontend.yaml -f west/listener.yaml
 ~~~
 
 _Sample output:_
 
 ~~~ console
-$ skupper site create west --enable-link-access
-Waiting for status...
-Site "west" is configured. Check the status to see when it is ready
+$ kubectl apply -f west/site.yaml -f west/frontend.yaml -f west/listener.yaml
+site.skupper.io/west created
+deployment.apps/frontend created
+listener.skupper.io/backend created
 ~~~
 
 _**East:**_
 
 ~~~ shell
-skupper site create east
+kubectl apply -f east/site.yaml -f east/backend.yaml -f east/connector.yaml
 ~~~
 
 _Sample output:_
 
 ~~~ console
-$ skupper site create east
-Waiting for status...
-Site "east" is configured. Check the status to see when it is ready
+$ kubectl apply -f east/site.yaml -f east/backend.yaml -f east/connector.yaml
+site.skupper.io/east created
+deployment.apps/backend created
+connector.skupper.io/backend created
 ~~~
 
-You can use `skupper site status` at any time to check the status
-of your site.
+## Step 5: Link your sites
 
-## Step 7: Link your sites
+A Skupper _link_ is a channel for communication between two
+sites.  Links serve as a transport for application connections
+and requests.
 
-A Skupper _link_ is a channel for communication between two sites.
-Links serve as a transport for application connections and
-requests.
+You can configure sites and service bindings declaratively, but
+linking sites is different.  To create a link, you must have the
+authentication secret and connection details of the remote site.
+Since these cannot always be known in advance, linking is
+usually procedural, not declarative.
 
-Creating a link requires the use of two Skupper commands in
-conjunction: `skupper token issue` and `skupper token redeem`.
-The `skupper token issue` command generates a secret token that
-can be transferred to a remote site and redeemed for a link to the
-issuing site.  The `skupper token redeem` command uses the token
+<!--
+**Note:** There are several ways to automate the generation and
+distribution of tokens across sites, using for example Ansible,
+Backstage, or Vault.  See [Token distribution][XXX] for more
+information.
+-->
+
+Skupper provides tokens as one way to securely create
+site-to-site links.  This example uses the Skupper command-line
+tool to issue the secret token in West and redeem the token for
+a link in East.
+
+To install the Skupper command:
+
+~~~ shell
+curl https://skupper.io/v2/install.sh | sh
+~~~
+
+For more installation options, see [Installing
+Skupper][install].
+
+Once the command is installed, use `skupper token issue` in West
+to generate the token.  Then, use `skupper token redeem` in East
 to create the link.
 
-**Note:** The link token is truly a *secret*.  Anyone who has the
-token can link to your site.  Make sure that only those you trust
-have access to it.
-
-First, use `skupper token issue` in West to generate the token.
-Then, use `skupper token redeem` in East to link the sites.
+[install]: https://skupper.io/install/index.html
 
 _**West:**_
 
@@ -313,147 +451,39 @@ to use `scp` or a similar tool to transfer the token securely.  By
 default, tokens expire after a single use or 15 minutes after
 being issued.
 
-## Step 8: Expose the backend service
-
-We now have our sites linked to form a Skupper network, but no
-services are exposed on it.
-
-Skupper uses _listeners_ and _connectors_ to expose services
-across sites inside a Skupper network.  A listener is a local
-endpoint for client connections, configured with a routing key.  A
-connector exists in a remote site and binds a routing key to a
-particular set of servers.  Skupper routers forward client
-connections from local listeners to remote connectors with
-matching routing keys.
-
-In West, use the `skupper listener create` command to create a
-listener for the backend.  In East, use the `skupper connector
-create` command to create a matching connector.
-
-_**West:**_
-
-~~~ shell
-skupper listener create backend 9091
-~~~
-
-_Sample output:_
-
-~~~ console
-$ skupper listener create backend 9091
-Waiting for create to complete...
-Listener "backend" is ready
-~~~
-
-_**East:**_
-
-~~~ shell
-skupper connector create backend 9091
-~~~
-
-_Sample output:_
-
-~~~ console
-$ skupper connector create backend 9091
-Waiting for create to complete...
-Connector "backend" is ready
-~~~
-
-The commands shown above use the name argument, `backend`, to also
-set the default routing key and pod selector.  You can use the
-`--routing-key` and `--selector` options to set specific values.
-
-<!-- You can also use `--workload` -- more convenient! -->
-
-## Step 9: Expose the backend metrics service
-
-The backend also exposes a metrics endpoint on port 9092.
-Create a second listener/connector pair to expose the metrics service.
-
-_**West:**_
-
-~~~ shell
-skupper listener create backend-metrics 9192 --routing-key backend-metrics
-~~~
-
-_Sample output:_
-
-~~~ console
-$ skupper listener create backend-metrics 9192 --routing-key backend-metrics
-Waiting for create to complete...
-Listener "backend-metrics" is ready
-~~~
-
-_**East:**_
-
-~~~ shell
-skupper connector create backend-metrics 9092 --routing-key backend-metrics --workload deployment/backend
-~~~
-
-_Sample output:_
-
-~~~ console
-$ skupper connector create backend-metrics 9092 --routing-key backend-metrics --workload deployment/backend
-Waiting for create to complete...
-Connector "backend-metrics" is ready
-~~~
-
-## Step 10: Access the frontend service
+## Step 6: Access the frontend service
 
 In order to use and test the application, we need external access
 to the frontend.
 
 Use `kubectl port-forward` to make the frontend available at
-`localhost:9093`.
+`localhost:8080`.
 
 _**West:**_
 
 ~~~ shell
-kubectl port-forward deployment/frontend 9094:9093
+kubectl port-forward deployment/frontend 8080:8080
 ~~~
 
 You can now access the web interface by navigating to
-[http://localhost:9093](http://localhost:9093) in your browser.
-
-The backend metrics are also accessible at [http://localhost:9192](http://localhost:9192).
+[http://localhost:8080](http://localhost:8080) in your browser.
 
 ## Cleaning up
 
 To remove Skupper and the other resources from this exercise, use
-the following commands:
+the following commands.
 
 _**West:**_
 
 ~~~ shell
-skupper site delete --all
-kubectl delete deployment/frontend
+kubectl delete -f west/ --ignore-not-found
 ~~~
 
 _**East:**_
 
 ~~~ shell
-skupper site delete --all
-kubectl delete deployment/backend
+kubectl delete -f east/ --ignore-not-found
 ~~~
-
-## Summary
-
-This example locates the frontend and backend services in different
-namespaces, on different clusters.  Ordinarily, this means that they
-have no way to communicate unless they are exposed to the public
-internet.
-
-Introducing Skupper into each namespace allows us to create a virtual
-application network that can connect services in different clusters.
-Any service exposed on the application network is represented as a
-local service in all of the linked namespaces.
-
-The backend service is located in `east`, but the frontend service
-in `west` can "see" it as if it were local.  When the frontend
-sends a request to the backend, Skupper forwards the request to the
-namespace where the backend is running and routes the response back to
-the frontend.
-
-<img src="images/sequence.svg" width="640"/>
 
 ## Next steps
 

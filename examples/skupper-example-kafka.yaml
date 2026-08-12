@@ -1,15 +1,27 @@
 title: Accessing Kafka using Skupper
 subtitle: Use public cloud resources to process data from a private Kafka cluster
-overview: "This example is a simple Kafka application that shows how you can\nuse\
-  \ Skupper to access a Kafka cluster at a remote site without\nexposing it to the\
-  \ public internet.\n\nIt contains two services:\n\n* A Kafka cluster named \"cluster1\"\
-  \ running in a private data center.\n  The cluster has a topic named \"topic1\"\
-  .\n\n* A Kafka client running in the public cloud.  It sends 10 messages\n  to \"\
-  topic1\" and then receives them back.\n\nTo set up the Kafka cluster, this example\
-  \ uses the Kubernetes\noperator from the [Strimzi][strimzi] project.  The Kafka\
-  \ client is a\nJava application built using [Quarkus][quarkus].\n\nThe example uses\
-  \ two Kubernetes namespaces, \"private\" and \"public\",\nto represent the private\
-  \ data center and public cloud.\n\n[strimzi]: https://strimzi.io/\n[quarkus]: https://quarkus.io/\n"
+overview: |
+  This example is a simple Kafka application that shows how you can
+  use Skupper to access a Kafka cluster at a remote site without
+  exposing it to the public internet.
+
+  It contains two services:
+
+  * A Kafka cluster named "cluster1" running in a private data center.
+    The cluster has a topic named "topic1".
+
+  * A Kafka client running in the public cloud.  It sends 10 messages
+    to "topic1" and then receives them back.
+
+  To set up the Kafka cluster, this example uses the Kubernetes
+  operator from the [Strimzi][strimzi] project.  The Kafka client is a
+  Java application built using [Quarkus][quarkus].
+
+  The example uses two Kubernetes namespaces, "private" and "public",
+  to represent the private data center and public cloud.
+
+  [strimzi]: https://strimzi.io/
+  [quarkus]: https://quarkus.io/
 sites:
   public:
     title: Public
@@ -26,64 +38,43 @@ sites:
 steps:
 - title: Install the Skupper command-line tool
   numbered: true
-  preamble: 'This example uses the Skupper command-line tool to create Skupper
-
+  preamble: |-
+    This example uses the Skupper command-line tool to create Skupper
     resources.  You need to install the `skupper` command only once
-
     for each development environment.
 
-
     On Linux or Mac, you can use the install script (inspect it
-
     [here][install-script]) to download and extract the command:
 
-
     ~~~ shell
-
     curl https://skupper.io/v2/install.sh | sh
-
     ~~~
 
-
     The script installs the command under your home directory.  It
-
     prompts you to add the command to your path if necessary.
 
-
     For Windows and other installation options, see [Installing
-
     Skupper][install-docs].
 
-
     [install-script]: https://github.com/skupperproject/skupper-website/blob/main/input/install.sh
-
-    [install-docs]: https://skupper.io/#installation'
+    [install-docs]: https://skupper.io/#installation
 - title: Access your Kubernetes clusters
   numbered: true
-  preamble: 'Skupper is designed for use with multiple Kubernetes clusters.
-
+  preamble: |-
+    Skupper is designed for use with multiple Kubernetes clusters.
     The `skupper` and `kubectl` commands use your
-
     [kubeconfig][kubeconfig] and current context to select the cluster
-
     and namespace where they operate.
-
 
     [kubeconfig]: https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/
 
-
     This example uses multiple cluster contexts at once. The
-
     `KUBECONFIG` environment variable tells `skupper` and `kubectl`
-
     which kubeconfig to use.
 
-
     For each cluster, open a new terminal window.  In each terminal,
-
     set the `KUBECONFIG` environment variable to a different path and
-
-    log in to your cluster.'
+    log in to your cluster.
   postamble: '**Note:** The login procedure varies by provider.'
   commands:
     public:
@@ -96,16 +87,13 @@ steps:
       apply: readme
 - title: Install Skupper on your Kubernetes clusters
   numbered: true
-  preamble: 'Using Skupper on Kubernetes requires the installation of the
-
+  preamble: |-
+    Using Skupper on Kubernetes requires the installation of the
     Skupper custom resource definitions (CRDs) and the Skupper
-
     controller.
 
-
     For each cluster, use `kubectl apply` with the Skupper
-
-    installation YAML to install the CRDs and controller.'
+    installation YAML to install the CRDs and controller.
   commands:
     public:
     - run: kubectl apply -f https://skupper.io/v2/install.yaml
@@ -120,275 +108,199 @@ steps:
         kubectl apply -f -
       apply: test
 - title: Deploy the Kafka cluster
-  preamble: 'In Private, use the `kubectl create` and `kubectl apply`
-
+  preamble: |
+    In Private, use the `kubectl create` and `kubectl apply`
     commands with the listed YAML files to install the operator and
-
     deploy the cluster and topic.
-
-    '
   commands:
     private:
     - run: kubectl create -f server/strimzi.yaml
-      output: 'customresourcedefinition.apiextensions.k8s.io/kafkas.kafka.strimzi.io
-        created
-
-        rolebinding.rbac.authorization.k8s.io/strimzi-cluster-operator-entity-operator-delegation
-        created
-
+      output: |
+        customresourcedefinition.apiextensions.k8s.io/kafkas.kafka.strimzi.io created
+        rolebinding.rbac.authorization.k8s.io/strimzi-cluster-operator-entity-operator-delegation created
         clusterrolebinding.rbac.authorization.k8s.io/strimzi-cluster-operator created
-
-        rolebinding.rbac.authorization.k8s.io/strimzi-cluster-operator-topic-operator-delegation
-        created
-
-        customresourcedefinition.apiextensions.k8s.io/kafkausers.kafka.strimzi.io
-        created
-
-        customresourcedefinition.apiextensions.k8s.io/kafkarebalances.kafka.strimzi.io
-        created
-
+        rolebinding.rbac.authorization.k8s.io/strimzi-cluster-operator-topic-operator-delegation created
+        customresourcedefinition.apiextensions.k8s.io/kafkausers.kafka.strimzi.io created
+        customresourcedefinition.apiextensions.k8s.io/kafkarebalances.kafka.strimzi.io created
         deployment.apps/strimzi-cluster-operator created
-
-        customresourcedefinition.apiextensions.k8s.io/kafkamirrormaker2s.kafka.strimzi.io
-        created
-
+        customresourcedefinition.apiextensions.k8s.io/kafkamirrormaker2s.kafka.strimzi.io created
         clusterrole.rbac.authorization.k8s.io/strimzi-entity-operator created
-
         clusterrole.rbac.authorization.k8s.io/strimzi-cluster-operator-global created
-
-        clusterrolebinding.rbac.authorization.k8s.io/strimzi-cluster-operator-kafka-broker-delegation
-        created
-
+        clusterrolebinding.rbac.authorization.k8s.io/strimzi-cluster-operator-kafka-broker-delegation created
         rolebinding.rbac.authorization.k8s.io/strimzi-cluster-operator created
-
-        clusterrole.rbac.authorization.k8s.io/strimzi-cluster-operator-namespaced
-        created
-
+        clusterrole.rbac.authorization.k8s.io/strimzi-cluster-operator-namespaced created
         clusterrole.rbac.authorization.k8s.io/strimzi-topic-operator created
-
-        clusterrolebinding.rbac.authorization.k8s.io/strimzi-cluster-operator-kafka-client-delegation
-        created
-
+        clusterrolebinding.rbac.authorization.k8s.io/strimzi-cluster-operator-kafka-client-delegation created
         clusterrole.rbac.authorization.k8s.io/strimzi-kafka-client created
-
         serviceaccount/strimzi-cluster-operator created
-
         clusterrole.rbac.authorization.k8s.io/strimzi-kafka-broker created
-
-        customresourcedefinition.apiextensions.k8s.io/kafkatopics.kafka.strimzi.io
-        created
-
-        customresourcedefinition.apiextensions.k8s.io/kafkabridges.kafka.strimzi.io
-        created
-
-        customresourcedefinition.apiextensions.k8s.io/kafkaconnectors.kafka.strimzi.io
-        created
-
-        customresourcedefinition.apiextensions.k8s.io/kafkaconnects2is.kafka.strimzi.io
-        created
-
-        customresourcedefinition.apiextensions.k8s.io/kafkaconnects.kafka.strimzi.io
-        created
-
-        customresourcedefinition.apiextensions.k8s.io/kafkamirrormakers.kafka.strimzi.io
-        created
-
+        customresourcedefinition.apiextensions.k8s.io/kafkatopics.kafka.strimzi.io created
+        customresourcedefinition.apiextensions.k8s.io/kafkabridges.kafka.strimzi.io created
+        customresourcedefinition.apiextensions.k8s.io/kafkaconnectors.kafka.strimzi.io created
+        customresourcedefinition.apiextensions.k8s.io/kafkaconnects2is.kafka.strimzi.io created
+        customresourcedefinition.apiextensions.k8s.io/kafkaconnects.kafka.strimzi.io created
+        customresourcedefinition.apiextensions.k8s.io/kafkamirrormakers.kafka.strimzi.io created
         configmap/strimzi-cluster-operator created
-
-        '
     - run: kubectl apply -f server/cluster1.yaml
-      output: 'kafka.kafka.strimzi.io/cluster1 created
-
+      output: |
+        kafka.kafka.strimzi.io/cluster1 created
         kafkatopic.kafka.strimzi.io/topic1 created
-
-        '
     - await_resource: kafka/cluster1
     - run: kubectl wait --for condition=ready --timeout 900s kafka/cluster1
-      output: 'kafka.kafka.strimzi.io/cluster1 condition met
+      output: |
+        kafka.kafka.strimzi.io/cluster1 condition met
+  postamble: |
+    **Note:**
 
-        '
-  postamble: "**Note:**\n\nBy default, the Kafka bootstrap server returns broker addresses\n\
-    that include the Kubernetes namespace in their domain name.\nWhen, as in this\
-    \ example, the Kafka client is running in a\nnamespace with a different name from\
-    \ that of the Kafka cluster,\nthis prevents the client from resolving the Kafka\
-    \ brokers.\n\nTo make the Kafka brokers reachable, set the `advertisedHost`\n\
-    property of each broker to a domain name that the Kafka client\ncan resolve at\
-    \ the remote site.  In this example, this is\nachieved with the following listener\
-    \ configuration:\n\n~~~ yaml\nspec:\n  kafka:\n    listeners:\n      - name: plain\n\
-    \        port: 9092\n        type: internal\n        tls: false\n        configuration:\n\
-    \          brokers:\n            - broker: 0\n              advertisedHost: cluster1-kafka-0\n\
-    \            - broker: 1\n              advertisedHost: cluster1-kafka-1\n~~~\n\
-    \nSee [Advertised addresses for brokers][advertised-addresses] for\nmore information.\n\
-    \n[advertised-addresses]: https://strimzi.io/docs/operators/in-development/configuring.html#property-listener-config-broker-reference\n"
+    By default, the Kafka bootstrap server returns broker addresses
+    that include the Kubernetes namespace in their domain name.
+    When, as in this example, the Kafka client is running in a
+    namespace with a different name from that of the Kafka cluster,
+    this prevents the client from resolving the Kafka brokers.
+
+    To make the Kafka brokers reachable, set the `advertisedHost`
+    property of each broker to a domain name that the Kafka client
+    can resolve at the remote site.  In this example, this is
+    achieved with the following listener configuration:
+
+    ~~~ yaml
+    spec:
+      kafka:
+        listeners:
+          - name: plain
+            port: 9092
+            type: internal
+            tls: false
+            configuration:
+              brokers:
+                - broker: 0
+                  advertisedHost: cluster1-kafka-0
+                - broker: 1
+                  advertisedHost: cluster1-kafka-1
+    ~~~
+
+    See [Advertised addresses for brokers][advertised-addresses] for
+    more information.
+
+    [advertised-addresses]: https://strimzi.io/docs/operators/in-development/configuring.html#property-listener-config-broker-reference
 - title: Create your sites
-  preamble: 'A Skupper _site_ is a location where components of your
-
+  preamble: |
+    A Skupper _site_ is a location where components of your
     application are running.  Sites are linked together to form a
-
     network for your application.  In Kubernetes, a site is associated
-
     with a namespace.
 
-
     Use the kubectl apply command to declaratively create sites in the kubernetes
-
     namespaces. This deploys the Skupper router. Then use kubectl get site to see
-
     the outcome.
 
-
     **Note:** If you are using Minikube, you need to [start minikube
-
     tunnel][minikube-tunnel] before you create your sites.
 
-
     [minikube-tunnel]: https://skupper.io/start/minikube.html#running-minikube-tunnel
-
-    '
   commands:
     private:
     - run: kubectl apply -f ./private-crs/site.yaml
     - run: kubectl wait --for condition=Ready --timeout=3m site/private
-      output: 'site.skupper.io/private created
-
+      output: |
+        site.skupper.io/private created
         site.skupper.io/private condition met
-
-        '
     public:
     - run: kubectl apply -f ./public-crs/site.yaml
     - run: kubectl wait --for condition=Ready --timeout=3m site/public
-      output: 'site.skupper.io/public created
-
+      output: |
+        site.skupper.io/public created
         site.skupper.io/public condition met
-
-        '
 - title: Link your sites
-  preamble: 'A Skupper _link_ is a channel for communication between two sites.
-
+  preamble: |
+    A Skupper _link_ is a channel for communication between two sites.
     Links serve as a transport for application connections and
-
     requests.
 
-
     Creating a link requires the use of two Skupper commands in
-
     conjunction: `skupper token issue` and `skupper token redeem`.
-
     The `skupper token issue` command generates a secret token that
-
     can be transferred to a remote site and redeemed for a link to the
-
     issuing site.  The `skupper token redeem` command uses the token
-
     to create the link.
 
-
     **Note:** The link token is truly a *secret*.  Anyone who has the
-
     token can link to your site.  Make sure that only those you trust
-
     have access to it.
 
-
     First, use `skupper token issue` in @site0@ to generate the token.
-
     Then, use `skupper token redeem` in @site1@ to link the sites.
-
-    '
   commands:
     public:
     - run: skupper token issue ~/secret.token
-      output: "Waiting for token status ...\n\nGrant \"public-cad4f72d-2917-49b9-ab66-cdaca4d6cf9c\"\
-        \ is ready\nToken file /run/user/1000/skewer/secret.token created\n\nTransfer\
-        \ this file to a remote site. At the remote site,\ncreate a link to this site\
-        \ using the \"skupper token redeem\" command:\n\n  skupper token redeem <file>\n\
-        \nThe token expires after 1 use(s) or after 15m0s.\n"
+      output: |
+        Waiting for token status ...
+
+        Grant "public-cad4f72d-2917-49b9-ab66-cdaca4d6cf9c" is ready
+        Token file /run/user/1000/skewer/secret.token created
+
+        Transfer this file to a remote site. At the remote site,
+        create a link to this site using the "skupper token redeem" command:
+
+          skupper token redeem <file>
+
+        The token expires after 1 use(s) or after 15m0s.
     private:
     - run: skupper token redeem ~/secret.token
-      output: 'Waiting for token status ...
-
+      output: |
+        Waiting for token status ...
         Token "public-cad4f72d-2917-49b9-ab66-cdaca4d6cf9c" has been redeemed
-
-        '
-  postamble: 'If your terminal sessions are on different machines, you may need
-
+  postamble: |
+    If your terminal sessions are on different machines, you may need
     to use `scp` or a similar tool to transfer the token securely.  By
-
     default, tokens expire after a single use or 15 minutes after
-
     being issued.
-
-    '
 - title: Expose the Kafka cluster
-  preamble: 'We will create listeners and connectors to expose the kafka service
-
+  preamble: |
+    We will create listeners and connectors to expose the kafka service
     In Private, we will create a connector.
 
-
     Then, in Public, we will create a listener.
-
-    '
   commands:
     private:
     - run: kubectl apply -f ./private-crs/connector.yaml
-      output: 'connector.skupper.io/cluster1-kafka created
-
-        '
+      output: |
+        connector.skupper.io/cluster1-kafka created
     public:
     - run: kubectl apply -f ./public-crs/listener.yaml
-      output: 'listener.skupper.io/cluster1-kafka-brokers created
-
-        '
+      output: |
+        listener.skupper.io/cluster1-kafka-brokers created
 - title: Run the client
-  preamble: 'Use the `kubectl run` command to execute the client program in
-
+  preamble: |
+    Use the `kubectl run` command to execute the client program in
     Public sending to either broker.
-
-    '
   commands:
     public:
     - await_resource: service/cluster1-kafka-1
     - await_resource: service/cluster1-kafka-0
     - run: kubectl run client --attach --rm --restart Never --image quay.io/skupper/kafka-example-client
         --env BOOTSTRAP_SERVERS=cluster1-kafka-0:9092
-      output: '[...]
-
-        Received message 1
-
-        Received message 2
-
-        Received message 3
-
-        Received message 4
-
-        Received message 5
-
-        Received message 6
-
-        Received message 7
-
-        Received message 8
-
-        Received message 9
-
-        Received message 10
-
-        Result: OK
-
+      output: |
         [...]
-
-        '
-  postamble: 'To see the client code, look in the [client directory](client)
-
+        Received message 1
+        Received message 2
+        Received message 3
+        Received message 4
+        Received message 5
+        Received message 6
+        Received message 7
+        Received message 8
+        Received message 9
+        Received message 10
+        Result: OK
+        [...]
+  postamble: |
+    To see the client code, look in the [client directory](client)
     of this project.
-
-    '
 - title: Cleaning Up
-  preamble: 'To test remove Skupper and the other resources from this exercise, use
-
+  preamble: |
+    To test remove Skupper and the other resources from this exercise, use
     the following commands.
-
-    '
   commands:
     private:
     - run: skupper site delete --all

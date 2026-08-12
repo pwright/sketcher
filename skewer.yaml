@@ -1,0 +1,156 @@
+title: Skupper Online Boutique
+subtitle: A Cloud-Native gRPC microservice-based application deployed across multiple Kubernetes clusters using Skupper
+overview: |
+  This tutorial demonstrates how to deploy the [Online
+  Boutique](https://github.com/GoogleCloudPlatform/microservices-demo/)
+  microservices demo application across multiple Kubernetes clusters that are
+  located in different public and private cloud providers. This project
+  contains a 10-tier microservices application developed by Google to
+  demonstrate the use of technologies like Kubernetes.
+
+  In this tutorial, you will create a Virtual Application Network that enables
+  communications across the public and private clusters. You will then deploy a
+  subset of the application's grpc based microservices to each cluster. You
+  will then access the `Online Boutique` web interface to browse items, add
+  them to the cart and purchase them.
+sites:
+  grpc-a:
+    title: gRPC A
+    platform: kubernetes
+    namespace: grpc-a
+    env:
+      KUBECONFIG: ~/.kube/config-grpc-a
+  grpc-b:
+    title: gRPC B
+    platform: kubernetes
+    namespace: grpc-b
+    env:
+      KUBECONFIG: ~/.kube/config-grpc-b
+  grpc-c:
+    title: gRPC C
+    platform: kubernetes
+    namespace: grpc-c
+    env:
+      KUBECONFIG: ~/.kube/config-grpc-c
+steps:
+  - standard: platform/access_your_kubernetes_clusters
+  - standard: platform/install_skupper_on_your_kubernetes_clusters
+  - title: Apply Kubernetes Resources
+    preamble: |
+      Apply the application deployment resources alongside the skupper
+      resources describing the application network.
+    commands:
+      grpc-a:
+        - run: kubectl create namespace grpc-a
+        - run: kubectl apply -f resources-a
+      grpc-b:
+        - run: kubectl create namespace grpc-b
+        - run: kubectl apply -f resources-b
+      grpc-c:
+        - run: kubectl create namespace grpc-c
+        - run: kubectl apply -f resources-c
+  - title: Wait for Sites Ready
+    preamble: |
+      Before linking sites to form the network, wait for the Sites to be ready.
+    commands:
+      grpc-a:
+        - run: kubectl wait --for condition=Ready site/grpc-a --timeout 240s
+      grpc-b:
+        - run: kubectl wait --for condition=Ready site/grpc-b --timeout 120s
+      grpc-c:
+        - run: kubectl wait --for condition=Ready site/grpc-c --timeout 120s
+  - standard: platform/install_the_skupper_command_line_tool
+  - standard: skupper/link_your_sites/kubernetes_cli
+    commands:
+      grpc-a:
+        - run: skupper token issue ~/grpc-a.token --redemptions-allowed=2
+          output: |
+            Waiting for token status ...
+
+            Grant "grpc-a-cad4f72d-2917-49b9-ab66-cdaca4d6cf9c" is ready
+            Token file grpc-a.token created
+
+            Transfer this file to a remote site. At the remote site,
+            create a link to this site using the "skupper token redeem" command:
+
+            	skupper token redeem <file>
+
+            The token expires after 1 use(s) or after 15m0s.
+      grpc-b:
+        - run: skupper token issue ~/grpc-b.token
+        - run: skupper token redeem ~/grpc-a.token
+          output: |
+            Waiting for token status ...
+            Token "grpc-a-cad4f72d-2917-49b9-ab66-cdaca4d6cf9c" has been redeemed
+            You can now safely delete /run/user/1000/skewer/secret.token
+      grpc-c:
+        - run: skupper token redeem ~/grpc-a.token
+          output: |
+            Waiting for token status ...
+            Token "grpc-a-cad4f72d-2917-49b9-ab66-cdaca4d6cf9c" has been redeemed
+            You can now safely delete /run/user/1000/skewer/secret.token
+        - run: skupper token redeem ~/grpc-b.token
+          output: |
+            Waiting for token status ...
+            Token "grpc-b-cad4f72d-2917-49b9-ab66-cdaca4d6cf9c" has been redeemed
+            You can now safely delete /run/user/1000/skewer/secret.token
+  - title: Access the Boutique Shop application
+    preamble: |
+      The web frontend for the Online Boutique application can be accessed
+      via the frontend-external service. In the terminal for the **gRPC A**
+      cluster, get the shop URL and open it in a browser.
+    commands:
+      grpc-a:
+        - run: |
+            echo "http://$(kubectl get service frontend-external -n grpc-a -o=jsonpath='{.spec.clusterIP}')/"
+    postamble: |
+      Open a browser and use the URL provided above to access the Online
+      Boutique.
+  - title: Run the load generator
+    preamble: |
+      The Online Boutique application has a load generator that creates
+      realistic usage patterns on the website.
+
+      In the terminal for the **gRPC A** cluster, deploy the load
+      generator from the project root directory.
+    commands:
+      grpc-a:
+        - run: kubectl apply -f deployment-loadgenerator.yaml -n grpc-a
+  - title: Observe the load generator output
+    preamble: |
+      In the terminal for the **gRPC A** cluster, observe the output
+      from the load generator.
+    commands:
+      grpc-a:
+        - run: kubectl logs -f deploy/loadgenerator -n grpc-a
+          apply: readme
+  - title: Stop the load generator
+    preamble: |
+      In the terminal for the **gRPC A** cluster, stop the load
+      generator.
+    commands:
+      grpc-a:
+        - run: kubectl delete -f deployment-loadgenerator.yaml -n grpc-a
+          apply: readme
+  - standard: skupper/cleaning_up/kubernetes_cli
+    commands:
+      grpc-a:
+        - run: kubectl delete -f deployment-loadgenerator.yaml -n grpc-a --ignore-not-found
+        - run: kubectl delete -f resources-a
+      grpc-b:
+        - run: kubectl delete -f resources-b
+      grpc-c:
+        - run: kubectl delete -f resources-c
+summary: |
+  This example locates the many services that make up a microservice
+  application across three different namespaces on different clusters with no
+  modifications to the application. Without Skupper, it would normally take
+  careful network planning to avoid exposing these services over the public
+  internet.
+
+  Introducing Skupper into each namespace allows us to create a virtual
+  application network that can connect services in different clusters. Any
+  service exposed on the application network is represented as a local service in
+  all of the linked namespaces.
+
+  <img src="images/BoutiqueProcessLocations.png" width="600"/>

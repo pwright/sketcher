@@ -1,4 +1,3 @@
-# Minimal valid skewer.yaml example for schema validation testing
 title: Minimal Example
 sites:
   local:
@@ -7,7 +6,7 @@ sites:
     env:
       KUBECONFIG: ~/.kube/config
 steps:
-  - title: Hello World
-    commands:
-      local:
-        - run: echo "Hello from Sketcher"
+- title: Hello World
+  commands:
+    local:
+    - run: echo "Hello from Sketcher"

@@ -1,14 +1,25 @@
 title: Skupper Hello World using cluster policy
 subtitle: Use policy to control site linking and service exposure
-overview: "This example is a variant of [Skupper Hello World][hello-world] that\n\
-  uses [Skupper cluster policy][policy] to restrict site linking and\nservice exposure.\n\
-  \nIt contains two services:\n\n* A backend service that exposes an `/api/hello`\
-  \ endpoint.  It\n  returns greetings of the form `Hi, <your-name>.  I am <my-name>\n\
-  \  (<pod-name>)`.\n\n* A frontend service that sends greetings to the backend and\n\
-  \  fetches new greetings in response.\n\nThe frontend and backend run in different\
-  \ sites, on different\nclusters.  The example shows you how you can explicitly allow\n\
-  linking of the two sites and exposure of the backend service.\n\n[hello-world]:\
-  \ https://github.com/skupperproject/skupper-example-hello-world\n[policy]: https://skupper.io/docs/policy/index.html\n"
+overview: |
+  This example is a variant of [Skupper Hello World][hello-world] that
+  uses [Skupper cluster policy][policy] to restrict site linking and
+  service exposure.
+
+  It contains two services:
+
+  * A backend service that exposes an `/api/hello` endpoint.  It
+    returns greetings of the form `Hi, <your-name>.  I am <my-name>
+    (<pod-name>)`.
+
+  * A frontend service that sends greetings to the backend and
+    fetches new greetings in response.
+
+  The frontend and backend run in different sites, on different
+  clusters.  The example shows you how you can explicitly allow
+  linking of the two sites and exposure of the backend service.
+
+  [hello-world]: https://github.com/skupperproject/skupper-example-hello-world
+  [policy]: https://skupper.io/docs/policy/index.html
 sites:
   west:
     title: West
@@ -25,64 +36,43 @@ sites:
 steps:
 - title: Install the Skupper command-line tool
   numbered: true
-  preamble: 'This example uses the Skupper command-line tool to create Skupper
-
+  preamble: |-
+    This example uses the Skupper command-line tool to create Skupper
     resources.  You need to install the `skupper` command only once
-
     for each development environment.
 
-
     On Linux or Mac, you can use the install script (inspect it
-
     [here][install-script]) to download and extract the command:
 
-
     ~~~ shell
-
     curl https://skupper.io/v2/install.sh | sh
-
     ~~~
 
-
     The script installs the command under your home directory.  It
-
     prompts you to add the command to your path if necessary.
 
-
     For Windows and other installation options, see [Installing
-
     Skupper][install-docs].
 
-
     [install-script]: https://github.com/skupperproject/skupper-website/blob/main/input/install.sh
-
-    [install-docs]: https://skupper.io/#installation'
+    [install-docs]: https://skupper.io/#installation
 - title: Access your Kubernetes clusters
   numbered: true
-  preamble: 'Skupper is designed for use with multiple Kubernetes clusters.
-
+  preamble: |-
+    Skupper is designed for use with multiple Kubernetes clusters.
     The `skupper` and `kubectl` commands use your
-
     [kubeconfig][kubeconfig] and current context to select the cluster
-
     and namespace where they operate.
-
 
     [kubeconfig]: https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/
 
-
     This example uses multiple cluster contexts at once. The
-
     `KUBECONFIG` environment variable tells `skupper` and `kubectl`
-
     which kubeconfig to use.
 
-
     For each cluster, open a new terminal window.  In each terminal,
-
     set the `KUBECONFIG` environment variable to a different path and
-
-    log in to your cluster.'
+    log in to your cluster.
   postamble: '**Note:** The login procedure varies by provider.'
   commands:
     west:
@@ -94,63 +84,42 @@ steps:
     - run: <provider-specific login command>
       apply: readme
 - title: Enable Skupper cluster policy
-  preamble: 'To enable Skupper cluster policy, you install a Custom Resource
-
+  preamble: |
+    To enable Skupper cluster policy, you install a Custom Resource
     Definition (CRD) named `SkupperClusterPolicy`.  Installing the
-
     CRD requires cluster admin privileges.
 
-
     The presence of the CRD in a cluster tells Skupper to enforce
-
     cluster policy.  The default policy (an "empty" policy with
-
     nothing explicitly allowed) denies all site linking and service
-
     exposure.
 
-
     _**Warning:**_ Once the CRD is installed, any existing Skupper
-
     sites on the cluster will stop working because Skupper cluster
-
     policy denies all operations not explicitly allowed in the
-
     policy configuration.  Be careful to define working policy rules
-
     before you enable policy for existing sites.
 
-
     Use `kubectl apply` to install the CRD in each cluster.
-
-    '
   commands:
     west:
     - run: kubectl apply -f https://raw.githubusercontent.com/skupperproject/skupper/main/api/types/crds/skupper_cluster_policy_crd.yaml
-      output: 'customresourcedefinition.apiextensions.k8s.io/skupperclusterpolicies.skupper.io
-        created
-
+      output: |
+        customresourcedefinition.apiextensions.k8s.io/skupperclusterpolicies.skupper.io created
         clusterrole.rbac.authorization.k8s.io/skupper-service-controller created
-
-        '
     east:
     - run: kubectl apply -f https://raw.githubusercontent.com/skupperproject/skupper/main/api/types/crds/skupper_cluster_policy_crd.yaml
-      output: 'customresourcedefinition.apiextensions.k8s.io/skupperclusterpolicies.skupper.io
-        created
-
+      output: |
+        customresourcedefinition.apiextensions.k8s.io/skupperclusterpolicies.skupper.io created
         clusterrole.rbac.authorization.k8s.io/skupper-service-controller created
-
-        '
 - title: Deploy the frontend and backend
   numbered: true
-  preamble: 'Deploy the Hello World components, placing the frontend on one
-
+  preamble: |-
+    Deploy the Hello World components, placing the frontend on one
     cluster and the backend on the other.
 
-
     Use `kubectl create deployment` to deploy the frontend in West
-
-    and the backend in East.'
+    and the backend in East.
   commands:
     west:
     - run: kubectl create deployment frontend --image quay.io/skupper/hello-world-frontend
@@ -170,78 +139,52 @@ steps:
 - commands:
     west:
     - run: skupper init
-      output: 'Waiting for LoadBalancer IP or hostname...
-
+      output: |
+        Waiting for LoadBalancer IP or hostname...
         Waiting for status...
-
-        Skupper is now installed in namespace ''west''.  Use ''skupper status'' to
-        get more information.
-
-        '
+        Skupper is now installed in namespace 'west'.  Use 'skupper status' to get more information.
     - run: skupper status
-      output: 'Skupper is enabled for namespace west" (with policies). It is not connected
-        to any other sites. It has no exposed services.
-
-        '
+      output: |
+        Skupper is enabled for namespace west" (with policies). It is not connected to any other sites. It has no exposed services.
     east:
     - run: skupper init
-      output: 'Waiting for LoadBalancer IP or hostname...
-
+      output: |
+        Waiting for LoadBalancer IP or hostname...
         Waiting for status...
-
-        Skupper is now installed in namespace ''east''.  Use ''skupper status'' to
-        get more information.
-
-        '
+        Skupper is now installed in namespace 'east'.  Use 'skupper status' to get more information.
     - run: skupper status
-      output: 'Skupper is enabled for namespace "east" (with policies). It is not
-        connected to any other sites. It has no exposed services.
-
-        '
-  postamble: 'Note that the status output shows the sites enabled "with
-
-    policies".'
+      output: |
+        Skupper is enabled for namespace "east" (with policies). It is not connected to any other sites. It has no exposed services.
+  postamble: |-
+    Note that the status output shows the sites enabled "with
+    policies".
   title: Create your sites
   numbered: true
-  preamble: 'A Skupper _site_ is a location where your application workloads
-
+  preamble: |-
+    A Skupper _site_ is a location where your application workloads
     are running.  Sites are linked together to form a network for your
-
     application.
 
-
     For each namespace, use `skupper site create` with a site name of
-
     your choice.  This creates the site resource and deploys the
-
     Skupper router to the namespace.
 
-
     **Note:** If you are using Minikube, you need to [start minikube
-
     tunnel][minikube-tunnel] before you run `skupper site create`.
-
 
     <!-- XXX Explain enabling link acesss on one of the sites -->
 
-
-    [minikube-tunnel]: https://skupper.io/start/minikube.html#running-minikube-tunnel'
+    [minikube-tunnel]: https://skupper.io/start/minikube.html#running-minikube-tunnel
 - title: Attempt to link your sites and expose the backend
-  preamble: 'Let''s first try to link our sites and expose the backend service
-
+  preamble: |
+    Let's first try to link our sites and expose the backend service
     without permission.
 
-
     Use `skupper token create` in West to generate the token.  This
-
     is the first step in attempting to link the two sites.
 
-
     Use `skupper expose` to attempt to expose the backend service in
-
     East.
-
-    '
   commands:
     west:
     - run: skupper token create ~/secret.token
@@ -252,29 +195,61 @@ steps:
     - run: skupper expose deployment/backend --port 8080
       expect_failure: true
       output: 'Error: Policy validation error: deployment/backend cannot be exposed'
-  postamble: 'Because Skupper cluster policy is enabled, these operations are
-
+  postamble: |
+    Because Skupper cluster policy is enabled, these operations are
     denied.
-
-    '
 - title: Grant permission to link your sites and expose the backend
-  preamble: "With policy enabled, we need to explicitly allow the site link\nand service\
-    \ exposure required by the Hello World application.\n\nTo enable linking from\
-    \ East to West, use `allowIncomingLinks:\ntrue` in West and `allowOutgoingLinksHostnames:\
-    \ [\"*\"]` in East.\n\nThis example uses an asterisk in the list of allowed outgoing\n\
-    hostnames, which allows any hostname.  You can also specify a\nnarrow range of\
-    \ hostnames using regular expressions.\n\nTo enable exposure of the backend, use\
-    \ `allowedServices:\n[backend]` in West.  Then, in East, use `allowedServices:\n\
-    [backend]` and `allowedExposedResources: [deployment/backend]`.\n\nSee [Skupper\
-    \ cluster policy][policy] for more information about\npolicy configuration.\n\n\
-    #### Policy in West\n\n[west/policy.yaml](west/policy.yaml):\n\n~~~ yaml\napiVersion:\
-    \ skupper.io/v1alpha1\nkind: SkupperClusterPolicy\nmetadata:\n  name: west\nspec:\n\
-    \  namespaces: [west]\n  allowIncomingLinks: true\n  allowedServices: [backend]\n\
-    ~~~\n\n#### Policy in East\n\n[east/policy.yaml](east/policy.yaml):\n\n~~~ yaml\n\
-    apiVersion: skupper.io/v1alpha1\nkind: SkupperClusterPolicy\nmetadata:\n  name:\
-    \ east\nspec:\n  namespaces: [east]\n  allowedOutgoingLinksHostnames: [\"*\"]\n\
-    \  allowedExposedResources: [deployment/backend]\n  allowedServices: [backend]\n\
-    ~~~\n\nUse the `kubectl apply` command with the policy resources for\neach site.\n"
+  preamble: |
+    With policy enabled, we need to explicitly allow the site link
+    and service exposure required by the Hello World application.
+
+    To enable linking from East to West, use `allowIncomingLinks:
+    true` in West and `allowOutgoingLinksHostnames: ["*"]` in East.
+
+    This example uses an asterisk in the list of allowed outgoing
+    hostnames, which allows any hostname.  You can also specify a
+    narrow range of hostnames using regular expressions.
+
+    To enable exposure of the backend, use `allowedServices:
+    [backend]` in West.  Then, in East, use `allowedServices:
+    [backend]` and `allowedExposedResources: [deployment/backend]`.
+
+    See [Skupper cluster policy][policy] for more information about
+    policy configuration.
+
+    #### Policy in West
+
+    [west/policy.yaml](west/policy.yaml):
+
+    ~~~ yaml
+    apiVersion: skupper.io/v1alpha1
+    kind: SkupperClusterPolicy
+    metadata:
+      name: west
+    spec:
+      namespaces: [west]
+      allowIncomingLinks: true
+      allowedServices: [backend]
+    ~~~
+
+    #### Policy in East
+
+    [east/policy.yaml](east/policy.yaml):
+
+    ~~~ yaml
+    apiVersion: skupper.io/v1alpha1
+    kind: SkupperClusterPolicy
+    metadata:
+      name: east
+    spec:
+      namespaces: [east]
+      allowedOutgoingLinksHostnames: ["*"]
+      allowedExposedResources: [deployment/backend]
+      allowedServices: [backend]
+    ~~~
+
+    Use the `kubectl apply` command with the policy resources for
+    each site.
   commands:
     west:
     - run: kubectl apply -f west/policy.yaml
@@ -283,30 +258,23 @@ steps:
     - run: kubectl apply -f east/policy.yaml
     - await_resource: skupperclusterpolicy/east
 - title: Link your sites and expose the backend
-  preamble: 'Now that we have permission granted, let''s try again.
-
+  preamble: |
+    Now that we have permission granted, let's try again.
 
     Use `skupper token create` in West to generate the token.  Then,
-
     use `skupper link create` in East to link the sites.
 
-
     Use `skupper expose` to expose the backend service in East to
-
     the frontend in West.
-
-    '
   commands:
     west:
     - run: skupper token create ~/secret.token
       output: Token written to ~/secret.token
     east:
     - run: skupper link create ~/secret.token
-      output: 'Site configured to link to <endpoint> (name=link1)
-
-        Check the status of the link using ''skupper link status''.
-
-        '
+      output: |
+        Site configured to link to <endpoint> (name=link1)
+        Check the status of the link using 'skupper link status'.
     - run: skupper link status --wait 60
       apply: test
     - await_resource: deployment/backend
@@ -314,17 +282,15 @@ steps:
       output: deployment backend exposed as backend
 - title: Access the frontend service
   numbered: true
-  preamble: 'In order to use and test the application, we need external access
-
+  preamble: |-
+    In order to use and test the application, we need external access
     to the frontend.
 
-
     Use `kubectl port-forward` to make the frontend available at
-
-    `localhost:8080`.'
-  postamble: 'You can now access the web interface by navigating to
-
-    [http://localhost:8080](http://localhost:8080) in your browser.'
+    `localhost:8080`.
+  postamble: |-
+    You can now access the web interface by navigating to
+    [http://localhost:8080](http://localhost:8080) in your browser.
   commands:
     west:
     - await_resource: deployment/frontend
@@ -348,6 +314,6 @@ steps:
   name: cleaning_up
   title: Cleaning up
   numbered: false
-  preamble: 'To remove Skupper and the other resources from this exercise, use
-
-    the following commands:'
+  preamble: |-
+    To remove Skupper and the other resources from this exercise, use
+    the following commands:
