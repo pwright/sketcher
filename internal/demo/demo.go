@@ -263,7 +263,7 @@ func PauseForDemo(m *model.Model, quiet bool) error {
 	if firstSite != nil && firstSite.Platform == "kubernetes" {
 		err := firstSite.WithEnv(func() error {
 			if kubernetes.ResourceExists("deployment/frontend") {
-				frontendURL = "http://localhost:8080/"
+				frontendURL = "(See markdown for frontend URL)"
 			}
 
 			if kubernetes.ResourceExists("secret/skupper-console-users") {

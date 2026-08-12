@@ -1,16 +1,26 @@
 # JSON Schema Quick Start
 
-Get started with JSON Schema validation for `skewer.yaml` in 5 minutes.
+**Catch `skewer.yaml` errors before running Sketcher.**
 
-## 1. Install Dependencies
+## What You'll Accomplish
+
+In 5 minutes, you'll be able to:
+- Validate `skewer.yaml` syntax and structure instantly
+- Get autocomplete and inline errors in your IDE
+- Block invalid YAML from reaching CI/CD
+
+**Why this helps**: Schema validation catches typos, missing fields, and invalid values at edit time instead of test time.
+
+---
+
+## 1. Install and Validate
 
 ```bash
+# Install validator (one dependency)
 pip install jsonschema
 ```
 
-That's it! Only one dependency needed.
-
-## 2. Validate Your First File
+## 2. Validate Your skewer.yaml
 
 ```bash
 # Validate the minimal example
@@ -24,7 +34,13 @@ examples/minimal-valid.yaml  ✓ Valid
 ✓ All 1 file(s) valid
 ```
 
-## 3. Try an Invalid File
+**What this tells you**: Your `skewer.yaml` structure is correct, all required fields are present, and field types match expectations.
+
+---
+
+## 3. Catch Errors Early
+
+Create a file with an error to see validation in action:
 
 ```bash
 # This will show validation errors
@@ -36,7 +52,11 @@ Output:
 examples/invalid-example.yaml  ✗ Validation error at root: Additional properties are not allowed ('extra_field' was unexpected)
 ```
 
-## 4. Validate Multiple Files
+**What this prevents**: Wasting time running clusters and tests only to discover a typo or missing field.
+
+---
+
+## 4. Validate Multiple Files at Once
 
 ```bash
 # Using Python script
@@ -46,11 +66,15 @@ python scripts/validate-schema.py examples/minimal-valid.yaml tests/fixtures/ske
 just validate examples/minimal-valid.yaml tests/fixtures/skewer-resolved.yaml
 ```
 
-## 5. Enable IDE Autocomplete (Optional)
+---
+
+## 5. Get IDE Autocomplete (Optional but Recommended)
+
+**What you'll gain**: Autocomplete for field names, inline validation errors, hover documentation, and enum suggestions.
 
 ### VS Code
 
-Create `.vscode/settings.json`:
+Create or update `.vscode/settings.json`:
 ```json
 {
   "yaml.schemas": {
@@ -59,13 +83,11 @@ Create `.vscode/settings.json`:
 }
 ```
 
-Now you get:
-- ✅ Autocomplete for field names
-- ✅ Inline validation errors
-- ✅ Hover documentation
-- ✅ Enum suggestions
+**Result**: As you type `skewer.yaml`, VS Code suggests valid field names, shows errors inline, and displays documentation on hover.
 
-## Common Commands
+---
+
+## Reference: Common Commands
 
 ```bash
 # Single file
@@ -248,29 +270,48 @@ steps:
         - run: export KUBECONFIG=~/.kube/config-west
 ```
 
+---
+
+## What You've Accomplished
+
+You can now:
+- ✅ Validate `skewer.yaml` files before running Sketcher
+- ✅ Catch typos, missing fields, and invalid values at edit time
+- ✅ Get autocomplete and inline errors in your IDE (if configured)
+- ✅ Integrate validation into pre-commit hooks and CI/CD pipelines
+
+---
+
 ## Next Steps
 
-- Read [`SCHEMA.md`](../SCHEMA.md) for complete documentation
-- Read [`schema.md`](../schema.md) for technical analysis
-- Read [`docs/json-schema-summary.md`](./json-schema-summary.md) for implementation details
-- Check [`skewer-schema.json`](../skewer-schema.json) for schema definition
+**Learn more about validation**:
+- [`SCHEMA.md`](../SCHEMA.md) - Complete field reference and validation rules
+- [`json-schema-summary.md`](./json-schema-summary.md) - Implementation details
 
-## Help
+**Troubleshoot issues**:
+- [`docs/use-cases.md`](./use-cases.md) - Platform-specific workflows and troubleshooting
+- [`README.md`](../README.md) - Full Sketcher documentation
+
+---
+
+## Common Questions
 
 **Schema validation failing?**
-- Check error message for field path
-- Compare with `examples/minimal-valid.yaml`
-- Ensure file is resolved (no `standard:` references)
+- Check the error message for the exact field path
+- Compare your YAML with `examples/minimal-valid.yaml`
+- Ensure file is resolved (no `standard:` references) - run `skewer resolve` first
 
-**Schema validation passing but Sketcher failing?**
-- The schema doesn't validate everything (site references, file existence, etc.)
-- Run `python -m sketcher generate skewer.yaml` for full validation
+**Schema validation passes but Sketcher fails?**
+- The schema doesn't validate everything (site references, file existence, runtime requirements)
+- Run `skewer generate skewer.yaml` for full validation
+- Schema validation is an optional early-detection layer, not a replacement for Sketcher's validation
 
 **Want to disable validation?**
-- Just don't run the validation script
-- The schema is optional and non-intrusive
+- Simply don't run the validation script - it's completely optional
+- Remove `.vscode/settings.json` YAML schema configuration to disable IDE validation
 
-**Questions?**
-- Open an issue on GitHub
-- Check existing documentation
-- Look at example files in `examples/`
+---
+
+## About This Guide
+
+This quick start uses the **Explore** action from the Seven-Action Documentation Model - it helps you try JSON Schema validation with minimal commitment (5 minutes, one dependency) to see if it fits your workflow. For complete field reference and integration patterns, see [`SCHEMA.md`](../SCHEMA.md).

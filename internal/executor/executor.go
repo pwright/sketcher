@@ -5,9 +5,11 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/skupperproject/sketcher/internal/demo"
 	"github.com/skupperproject/sketcher/internal/kubernetes"
+	"github.com/skupperproject/sketcher/internal/logger"
 	"github.com/skupperproject/sketcher/internal/model"
 	"github.com/skupperproject/sketcher/internal/utils"
 )
@@ -58,13 +60,36 @@ func RunSteps(yamlFile string, kubeconfigs []string, workDir string, debug, quie
 		utils.Debug("Work directory created: %s", workDir)
 	}
 
+	// Determine run type
+	runType := "run"
+	if os.Getenv("SKETCHER_DEMO") != "" {
+		runType = "demo"
+	} else if os.Getenv("SKETCHER_TEST") != "" {
+		runType = "test"
+	}
+
+	// Create logger
+	log, err := logger.New(runType, yamlFile, workDir)
+	if err != nil {
+		utils.Warn("Failed to create logger: %v", err)
+		log = nil // Continue without logging
+	}
+	if log != nil {
+		defer log.Close()
+	}
+
 	// Run all steps except cleaning_up
 	for _, step := range m.Steps {
 		if step.Name == "cleaning_up" {
 			continue
 		}
 
-		if err := runStep(m, step, workDir, true, quiet); err != nil {
+		if err := runStep(m, step, workDir, true, quiet, log); err != nil {
+			if log != nil {
+				log.LogError(err, map[string]interface{}{
+					"step": stepString(step),
+				})
+			}
 			if debug {
 				printDebugOutput(m)
 			}
@@ -88,7 +113,7 @@ func RunSteps(yamlFile string, kubeconfigs []string, workDir string, debug, quie
 	// Always run cleaning_up if it exists
 	for _, step := range m.Steps {
 		if step.Name == "cleaning_up" {
-			runStep(m, step, workDir, false, true)
+			runStep(m, step, workDir, false, true, log)
 			break
 		}
 	}
@@ -96,7 +121,7 @@ func RunSteps(yamlFile string, kubeconfigs []string, workDir string, debug, quie
 	return nil
 }
 
-func runStep(m *model.Model, step *model.Step, workDir string, check, quiet bool) error {
+func runStep(m *model.Model, step *model.Step, workDir string, check, quiet bool, log *logger.RunLogger) error {
 	if len(step.Commands) == 0 {
 		return nil
 	}
@@ -117,6 +142,13 @@ func runStep(m *model.Model, step *model.Step, workDir string, check, quiet bool
 
 	if allReadme {
 		return nil
+	}
+
+	stepStart := time.Now()
+
+	// Log step start
+	if log != nil {
+		log.LogStep(step.Number, step.Title)
 	}
 
 	// Log step
@@ -149,6 +181,9 @@ func runStep(m *model.Model, step *model.Step, workDir string, check, quiet bool
 				// Execute await operations
 				if command.AwaitResource != "" {
 					utils.Debug("Awaiting resource: %s", command.AwaitResource)
+					if log != nil {
+						log.LogWait("resource", command.AwaitResource, 300, site.Name)
+					}
 					if err := kubernetes.AwaitResource(command.AwaitResource, 300, quiet); err != nil {
 						return err
 					}
@@ -156,6 +191,9 @@ func runStep(m *model.Model, step *model.Step, workDir string, check, quiet bool
 
 				if command.AwaitIngress != "" {
 					utils.Debug("Awaiting ingress: %s", command.AwaitIngress)
+					if log != nil {
+						log.LogWait("ingress", command.AwaitIngress, 300, site.Name)
+					}
 					if _, err := kubernetes.AwaitIngress(command.AwaitIngress, 300, quiet); err != nil {
 						return err
 					}
@@ -163,11 +201,17 @@ func runStep(m *model.Model, step *model.Step, workDir string, check, quiet bool
 
 				if len(command.AwaitHTTPOK) > 0 {
 					utils.Debug("Awaiting HTTP OK")
+					if log != nil {
+						log.LogWait("http_ok", fmt.Sprintf("%v", command.AwaitHTTPOK), 300, site.Name)
+					}
 					// Implementation would be in kubernetes package
 				}
 
 				if command.AwaitConsoleOK {
 					utils.Debug("Awaiting console OK")
+					if log != nil {
+						log.LogWait("console_ok", "skupper-console", 300, site.Name)
+					}
 					if err := kubernetes.AwaitConsoleOK(300, quiet); err != nil {
 						return err
 					}
@@ -175,6 +219,9 @@ func runStep(m *model.Model, step *model.Step, workDir string, check, quiet bool
 
 				if command.AwaitPort > 0 {
 					utils.Debug("Awaiting port: %d", command.AwaitPort)
+					if log != nil {
+						log.LogWait("port", fmt.Sprintf("localhost:%d", command.AwaitPort), 60, site.Name)
+					}
 					if err := utils.AwaitPort(command.AwaitPort, "localhost", 60); err != nil {
 						return err
 					}
@@ -218,6 +265,11 @@ func runStep(m *model.Model, step *model.Step, workDir string, check, quiet bool
 					// Check if this is a background command (ends with &)
 					isBackground := strings.HasSuffix(strings.TrimSpace(cmdStr), "&")
 
+					// Log command execution
+					if log != nil {
+						log.LogCommand(site.Name, cmdStr, isBackground)
+					}
+
 					var err error
 					if isBackground {
 						// Remove the & and run as tracked background process
@@ -259,6 +311,11 @@ func runStep(m *model.Model, step *model.Step, workDir string, check, quiet bool
 		if err != nil {
 			return err
 		}
+	}
+
+	// Log step completion
+	if log != nil {
+		log.LogStepComplete(step.Number, step.Title, time.Since(stepStart))
 	}
 
 	if !quiet {

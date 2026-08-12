@@ -2,41 +2,84 @@
 
 [![main](https://github.com/skupperproject/skewer/actions/workflows/main.yaml/badge.svg)](https://github.com/skupperproject/skewer/actions/workflows/main.yaml)
 
-A framework for documenting and testing Skupper examples
+**Automate Skupper example documentation and testing from a single YAML file.**
+
+## What You Can Accomplish
+
+With Sketcher, you can:
+
+- **Generate consistent documentation** - Write steps once in YAML, get formatted README.md with copy-paste commands
+- **Test examples automatically** - Run full multi-cluster demos in CI/CD without manual setup  
+- **Demo interactively** - Pause before cleanup to explore running applications and Skupper networking
+- **Validate before deployment** - Test Skupper configurations locally before pushing to production
+- **Work across platforms** - Same YAML runs on Kubernetes, Podman, Docker, and systemd
+
+**Quick start**: Install, create `skewer.yaml`, run `sketcher demo` to see your Skupper example working in under 60 seconds.
+
+---
+
+## How It Works
 
 Sketcher uses two command-line tools:
-- **`skewer`** (Python) - YAML processing and documentation generation
-- **`sketcher`** (Go) - Execution engine for running tests and demos
+- **`skewer`** (Python) - Processes YAML and generates documentation
+- **`sketcher`** (Go) - Executes steps, provisions clusters, runs tests
 
-Both tools work with `skewer.yaml` configuration files to automate Skupper example documentation and testing.
+Both read the same `skewer.yaml` file describing your Skupper example's sites, steps, and commands.
 
-#### Contents
+---
 
-- [Sketcher](#sketcher)      - [Contents](#contents)
-  - [An example example](#an-example-example)
-  - [Setting up Sketcher for your own example](#setting-up-sketcher-for-your-own-example)
-  - [Sketcher YAML](#sketcher-yaml)
-  - [Common step patterns](#common-step-patterns)
-  - [Demo mode](#demo-mode)
-  - [Extending demos with additional scenarios](#extending-demos-with-additional-scenarios)
-    - [Interactive development with demo-extend](#interactive-development-with-demo-extend)
-    - [Batch testing for CI/CD with test](#batch-testing-for-cicd-with-test)
-  - [Migration from Skewer](#migration-from-skewer)
-  - [Running against existing clusters](#running-against-existing-clusters)
-  - [Troubleshooting](#troubleshooting)
-    - [Subnet is already used](#subnet-is-already-used)
-    - [Sketcher command not found after installation](#sketcher-command-not-found-after-installation)
-    - [Resolver fails on old Skewer YAML](#resolver-fails-on-old-skewer-yaml)
-  - [Contributing](#contributing)
-  - [License](#license)
+## Contents
 
-## An example example
+- [What You Can Accomplish](#what-you-can-accomplish)
+- [How It Works](#how-it-works)
+- [Try Sketcher (5-Minute Start)](#try-sketcher-5-minute-start)
+- [Set Up Your Own Example](#set-up-your-own-example)
+- [Write Your skewer.yaml](#write-your-skeweryaml)
+- [Common Patterns](#common-patterns)
+- [Demo and Test Modes](#demo-and-test-modes)
+- [Extend Running Demos](#extend-running-demos)
+- [Choose Your Cluster Provider](#choose-your-cluster-provider)
+- [Migration from Skewer](#migration-from-skewer)
+- [Troubleshooting](#troubleshooting)
+  - [Viewing Execution Logs](#viewing-execution-logs)
+- [Contributing](#contributing)
 
-See [example/skewer.yaml](../skeleton/example/skewer.yaml) and the corresponding [example README output](../skeleton/example/README.md) for a complete working example.
+---
 
-Additional real-world examples are available in the [sketcher_yamls](../sketcher_yamls/) directory.
+## Try Sketcher (5-Minute Start)
 
-## Setting up Sketcher for your own example
+**What you'll accomplish**: See a complete Skupper example running across two clusters.
+
+**Prerequisites**: Docker Desktop (macOS) or Docker (Linux) installed and running.
+
+```bash
+# 1. Install both tools
+pip install sketcher
+curl -LO https://github.com/skupperproject/sketcher/releases/latest/download/sketcher-linux-x64
+chmod +x sketcher-linux-x64
+sudo mv sketcher-linux-x64 /usr/local/bin/sketcher
+
+# 2. Get an example (or use your own)
+cd /path/to/your/skupper-example
+
+# 3. Run demo (creates clusters, deploys app, pauses for inspection)
+sketcher demo --kind skewer.yaml
+
+# 4. Explore the running application
+# - Open URLs shown in demo output
+# - Check Skupper network status
+# - Inspect pods/services
+
+# 5. Type 'yes' when done to cleanup
+```
+
+**What happened**: Sketcher created two Kind clusters, deployed a Skupper network, connected services across clusters, and gave you a working demo environment.
+
+**Next**: See [Set Up Your Own Example](#set-up-your-own-example) to create your own Skupper documentation and tests.
+
+---
+
+## Set Up Your Own Example
 
 **Install both tools:**
 
@@ -119,7 +162,11 @@ sketcher test skewer.yaml --kind-lb     # Use Kind with LoadBalancer for tests
 
 **Note:** The `sketcher test` command requires both tools - it calls `skewer generate` to create documentation, then runs the execution steps.
 
-## Sketcher YAML
+## Write Your skewer.yaml
+
+Define your Skupper example's sites, steps, and commands in YAML format.
+
+### Top-Level Structure
 
 The top level of the `skewer.yaml` file:
 
@@ -282,9 +329,9 @@ commands:
         backend   ClusterIP   10.102.112.121   <none>        8080/TCP   30s
 ```
 
-## Common step patterns
+## Common Patterns
 
-Sketcher uses explicit YAML rather than a standard steps library. This makes behavior clearer and easier to debug. Here are common patterns you can adapt for your examples:
+Use these step patterns as templates for your Skupper examples. Sketcher uses explicit YAML rather than hidden templates, making behavior clearer and easier to debug.
 
 **Access your Kubernetes clusters:**
 
@@ -390,9 +437,13 @@ Sketcher uses explicit YAML rather than a standard steps library. This makes beh
 
 For more complete examples, see the [sketcher_yamls](../sketcher_yamls/) directory.
 
-## Demo mode
+## Demo and Test Modes
 
-Sketcher has a demo mode where it executes all the steps, but before cleaning up and exiting, it pauses so you can inspect and interact with the running application.
+Sketcher provides two execution modes depending on whether you need interactive exploration or automated validation.
+
+### Demo Mode: Interactive Exploration
+
+Demo mode executes all steps, then pauses before cleanup so you can inspect and interact with the running application.
 
 When you run `sketcher demo skewer.yaml`, after all steps complete successfully, Sketcher displays connection information and waits:
 
@@ -420,13 +471,27 @@ This allows you to:
 
 When you're finished, type `yes` to clean up and exit.
 
-## Extending demos with additional scenarios
+### Test Mode: Automated Validation
 
-Sketcher provides two complementary approaches for extending your tests beyond the base `skewer.yaml` file:
+Test mode runs all steps automatically, generates documentation, validates output, then cleans up. Perfect for CI/CD pipelines.
 
-### Interactive development with demo-extend
+```bash
+# Run full automated test (no pause, auto-cleanup)
+sketcher test skewer.yaml
 
-The `demo-extend` command allows you to attach to a running demo and execute additional test scenarios while keeping the clusters and services active. This is useful for iterative testing, adding observability features, or exploring different configurations.
+# With cluster provider options
+sketcher test --kind-lb skewer.yaml  # Fast CI/CD testing
+```
+
+---
+
+## Extend Running Demos
+
+Add observability, scaling, or chaos testing to a running demo without restarting clusters. Sketcher provides two complementary approaches:
+
+### Approach 1: Interactive Extensions (`demo-extend`)
+
+Attach to a running demo and execute additional scenarios while keeping clusters and services active. Perfect for iterative testing, adding observability, or exploring different configurations.
 
 **Usage:**
 
@@ -479,9 +544,9 @@ steps:
 
 When finished, return to the first terminal and type `yes` to clean up and exit.
 
-### Batch testing for CI/CD with test
+### Approach 2: Batch Testing (`test` with extensions)
 
-The `test` command automatically discovers and runs all test scenarios in a single batch execution, making it ideal for CI/CD pipelines.
+The `test` command automatically discovers and runs all test scenarios in a single batch execution. Ideal for CI/CD pipelines.
 
 **Usage:**
 
@@ -566,9 +631,11 @@ Sketcher uses fully expanded YAML instead of runtime step expansion because:
 
 For new examples, use the common step patterns shown above rather than relying on a standard steps library.
 
-## Running against existing clusters
+---
 
-By default, `sketcher demo` and `sketcher run` start a local Minikube instance automatically and use it for all Kubernetes sites. You can use Kind instead with the `--kind` flag, or run against your own clusters by passing kubeconfig file paths as positional arguments.
+## Choose Your Cluster Provider
+
+By default, Sketcher starts a local Minikube instance automatically. Choose a different provider based on your performance needs and environment.
 
 **Cluster provider comparison:**
 - **Minikube** (default) - Uses LoadBalancer ingress, slower startup, higher resource usage
@@ -652,6 +719,22 @@ The provided kubeconfigs override the paths in `skewer.yaml` at runtime — the 
 
 ## Troubleshooting
 
+### Viewing Execution Logs
+
+Every `sketcher demo`, `test`, and `run` execution automatically generates a detailed log file. The log path is printed at the end of each run:
+
+```
+Log file: /tmp/sketcher-xyz123/sketcher-demo-20260812-143022.log
+```
+
+View logs in human-readable format:
+
+```bash
+sketcher view-log /tmp/sketcher-xyz123/sketcher-demo-20260812-143022.log
+```
+
+The log includes every step, command, wait operation, and error with timestamps and context. See [docs/logging.md](docs/logging.md) for details on log format and debugging workflows.
+
 ### Subnet is already used
 
 Error:
@@ -709,6 +792,26 @@ python -m pytest tests/ -v
 ## License
 
 Same as Skupper project (Apache License 2.0).
+
+---
+
+## About This Documentation
+
+This README is organized using the **Seven-Action Documentation Model** to help you find what you need based on your immediate goal:
+
+| Section | Primary Action | What You Accomplish |
+|---------|----------------|---------------------|
+| What You Can Accomplish | **Appraise** | Assess whether Sketcher fits your Skupper documentation and testing needs |
+| Try Sketcher (5-Minute Start) | **Explore** | Try Sketcher with minimal commitment to see if it works for you |
+| Set Up Your Own Example | **Develop** | Create and test your own Skupper example from scratch |
+| Write Your skewer.yaml | **Remember** | Look up YAML field syntax, structure, and patterns |
+| Common Patterns | **Practice** | Copy and adapt proven step patterns for common Skupper scenarios |
+| Demo and Test Modes | **Practice** | Run interactive demos or automated tests depending on your workflow |
+| Extend Running Demos | **Develop** | Add observability, scaling, or chaos testing to existing demos |
+| Choose Your Cluster Provider | **Appraise** | Select the right cluster provider for your environment and performance requirements |
+| Troubleshooting | **Troubleshoot** | Diagnose and resolve installation, networking, and validation errors |
+
+For detailed platform-specific workflows and decision trees, see **[docs/use-cases.md](docs/use-cases.md)**.
 
 ---
 

@@ -1,17 +1,307 @@
 # Sketcher Use Cases - Practical Guide
 
-**Purpose**: Step-by-step instructions for common Sketcher scenarios organized by platform, environment, and topology.
+**Purpose**: Choose the right Sketcher approach for your environment and test goals.
+
+This guide helps you select platform options, cluster providers, and workflows based on what you need to accomplish. Each use case includes the exact commands and configuration needed.
 
 ---
 
-## Table of Contents
+## How to Use This Guide
 
-1. [macOS Use Cases](#macos-use-cases)
-2. [Linux Use Cases](#linux-use-cases)
-3. [Hybrid Scenarios](#hybrid-scenarios)
-4. [CI/CD Integration](#cicd-integration)
-5. [Development Workflows](#development-workflows)
-6. [Production Patterns](#production-patterns)
+Find the section matching what you need to do:
+
+- **[Quick Start Testing](#quick-start-testing)** - Try Sketcher with minimal setup
+- **[Choose Your Platform](#choose-your-platform)** - Pick the right cluster provider for macOS, Linux, or hybrid setups
+- **[Automate Testing](#automate-testing)** - Set up CI/CD pipelines and pre-commit validation
+- **[Develop Iteratively](#develop-iteratively)** - Debug, extend demos, and test against remote clusters
+- **[Production Validation](#production-validation)** - GitOps, blue/green, and disaster recovery testing
+- **[Troubleshoot Problems](#troubleshoot-problems)** - Resolve networking, ingress, and configuration issues
+
+---
+
+## Quick Start Testing
+
+### Test a Skupper example in under 60 seconds
+
+**What you need**: Docker Desktop (macOS) or Docker (Linux) running.
+
+**Run this**:
+```bash
+cd your-example-directory/
+sketcher demo --kind skewer.yaml
+```
+
+**What happens**:
+1. Creates two Kind clusters (west, east) in ~30 seconds
+2. Runs your example steps
+3. Displays connection info and pauses for inspection
+4. Type `yes` to clean up
+
+**Access the application**: Open `http://localhost:8080` (exact port shown in demo output).
+
+**Why this works**: Kind with NodePort ingress requires no tunnel, no MetalLB installation, just Docker.
+
+**Next steps**: 
+- See [Choose Your Platform](#choose-your-platform) if you need LoadBalancer ingress
+- See [Develop Iteratively](#develop-iteratively) to add observability to a running demo
+
+---
+
+## Choose Your Platform
+
+Select the cluster provider that fits your environment and performance needs.
+
+### macOS: Docker Desktop (Fastest)
+
+**When to use**: You have Docker Desktop installed and want the fastest local testing.
+
+**Command**:
+```bash
+sketcher demo --kind examples/skupper-example-hello-world.yaml
+```
+
+**Characteristics**:
+- Startup time: ~30 seconds
+- Ingress type: NodePort (localhost:30xxx)
+- Resource usage: Low
+- LoadBalancer support: No (use `--kind-lb` instead)
+
+**Limitations**: Skupper commands must include `--ingress nodeport --ingress-host localhost` flags.
+
+---
+
+### macOS: Colima (Docker Alternative)
+
+**When to use**: You prefer Colima over Docker Desktop.
+
+**Setup**:
+```bash
+# Required for NodePort access
+colima start --network-address
+
+# Verify
+colima status  # Should show: network: true
+```
+
+**Command**:
+```bash
+sketcher demo --kind examples/skupper-example-hello-world.yaml
+```
+
+**Troubleshooting**: If `localhost:30xxx` not accessible, restart Colima with `--network-address` flag.
+
+---
+
+### macOS/Linux: Kind + MetalLB (Best Balance)
+
+**When to use**: You want Kind's speed + standard LoadBalancer ingress (no nodeport configuration).
+
+**Command**:
+```bash
+sketcher demo --kind-lb examples/skupper-example-hello-world.yaml
+```
+
+**What this does**:
+1. Creates Kind clusters (fast startup)
+2. Auto-installs MetalLB in each cluster
+3. Allocates LoadBalancer IPs (172.18.x.x range)
+4. Uses standard Skupper commands (no `--ingress nodeport` needed)
+
+**Advantages over plain `--kind`**:
+- No ingress type configuration in skewer.yaml
+- Production-like LoadBalancer behavior
+- Faster than Minikube (~30s vs ~2min startup)
+
+**Recommended for**: CI/CD pipelines, development with LoadBalancer services.
+
+---
+
+### macOS: Minikube (Full Compatibility)
+
+**When to use**: You need complete Skupper CLI compatibility with no configuration changes.
+
+**Setup** (requires running tunnel):
+```bash
+# Terminal 1 - Keep this running
+minikube tunnel
+
+# Terminal 2 - Run demo
+sketcher demo examples/skupper-example-hello-world.yaml
+```
+
+**Characteristics**:
+- Startup time: ~2 minutes
+- Ingress type: LoadBalancer (requires tunnel)
+- Resource usage: Higher than Kind
+- Compatibility: Best (matches cloud providers)
+
+**Downsides**: Slower startup, requires persistent `minikube tunnel`, higher CPU/memory.
+
+---
+
+### Linux: Kind (Native Performance)
+
+**When to use**: Linux host, want fastest possible cluster startup with native networking.
+
+**Command**:
+```bash
+sketcher demo --kind examples/skupper-example-hello-world.yaml
+```
+
+**Advantages on Linux**:
+- Native container networking (no VM overhead)
+- Direct localhost NodePort access (no network-address flag like Colima)
+- Lower CPU/memory usage than Minikube
+
+---
+
+### Hybrid: Remote Cluster + Local Cluster
+
+**When to use**: One site on cloud/OpenShift, one local for fast iteration.
+
+**Example**: OpenShift production + local Kind development.
+
+**Setup**:
+```bash
+# Already logged into OpenShift
+oc login https://api.openshift.example.com
+oc config view --flatten > ~/.kube/config-openshift
+```
+
+**Command** (Sketcher auto-creates local cluster):
+```bash
+sketcher demo --kind skewer.yaml ~/.kube/config-openshift
+```
+
+**Site mapping** (order matters!):
+```yaml
+sites:
+  production:  # First site → first kubeconfig argument
+    platform: kubernetes
+    namespace: prod
+    env:
+      KUBECONFIG: ~/.kube/config-openshift
+  
+  development: # Second site → auto-provisioned Kind cluster
+    platform: kubernetes
+    namespace: dev
+    env:
+      KUBECONFIG: ~/.kube/config-local
+```
+
+**Manual cluster creation** (optional):
+```bash
+kind create cluster --name dev
+kind get kubeconfig --name dev > ~/.kube/config-dev
+sketcher demo skewer.yaml ~/.kube/config-openshift ~/.kube/config-dev
+```
+
+---
+
+### Edge: Podman Without Kubernetes
+
+**When to use**: Edge device, no Kubernetes, rootless containers required.
+
+**Prerequisites**: Podman installed (rootless mode).
+
+**Command**:
+```bash
+sketcher demo examples/podman2podman.yaml
+```
+
+**What this creates**:
+- Podman namespaces: west, east (in `~/.local/share/skupper/namespaces/`)
+- Skupper router containers (no Kubernetes)
+- Static link files (no LoadBalancer/NodePort)
+
+**Inspect containers**:
+```bash
+# List containers in 'west' namespace
+podman --namespace west ps
+
+# View Skupper router logs
+podman --namespace west logs skupper-router
+
+# Execute command in frontend
+podman --namespace west exec -it frontend bash
+```
+
+**Limitations**: Single host, services accessed via localhost:PORT only.
+
+---
+
+### Edge: Linux systemd + Kubernetes Cloud
+
+**When to use**: Legacy systemd services need Skupper networking to cloud backend.
+
+**Example configuration**:
+```yaml
+sites:
+  cloud:
+    platform: kubernetes
+    namespace: cloud-backend
+    env:
+      KUBECONFIG: ~/.kube/config-aws
+  
+  onprem:
+    platform: linux
+    namespace: onprem-services
+    env:
+      SKUPPER_PLATFORM: linux
+
+steps:
+  - title: Expose systemd service to cloud
+    commands:
+      onprem:
+        - run: skupper connector create legacy-api 8080 --host localhost
+```
+
+**Limitations**: Skupper runs as systemd service, services must be at localhost:PORT.
+
+---
+
+### Multi-Cloud: Three Regions (AWS, Azure, GCP)
+
+**When to use**: Test multi-cloud deployments across all three major providers.
+
+**Prerequisites**:
+- Kubeconfigs: `~/.kube/config-aws`, `~/.kube/config-azure`, `~/.kube/config-gcp`
+- Already authenticated to each cluster
+
+**Command**:
+```bash
+# Site order matches argument order
+sketcher demo multi-cloud.yaml \
+  ~/.kube/config-aws \
+  ~/.kube/config-azure \
+  ~/.kube/config-gcp
+```
+
+**Site definition**:
+```yaml
+sites:
+  aws:    # First site → first kubeconfig
+    platform: kubernetes
+    namespace: us-east-1
+    env:
+      KUBECONFIG: ~/.kube/config-aws
+  
+  azure:  # Second site → second kubeconfig
+    platform: kubernetes
+    namespace: west-europe
+    env:
+      KUBECONFIG: ~/.kube/config-azure
+  
+  gcp:    # Third site → third kubeconfig
+    platform: kubernetes
+    namespace: us-central1
+    env:
+      KUBECONFIG: ~/.kube/config-gcp
+```
+
+---
+
+## Automate Testing
 
 ---
 
@@ -407,11 +697,11 @@ sketcher demo multi-cloud.yaml \
 
 ---
 
-## CI/CD Integration
+Set up automated validation in CI/CD pipelines and git hooks.
 
-### Use Case 12: GitHub Actions with Kind+MetalLB
+### GitHub Actions with Kind+MetalLB
 
-**Scenario**: Automated testing in GitHub Actions.
+**What you accomplish**: Every push/PR runs full Skupper example tests automatically.
 
 **.github/workflows/test.yaml**:
 ```yaml
@@ -466,9 +756,9 @@ jobs:
 
 ---
 
-### Use Case 13: GitLab CI with Minikube
+---
 
-**Scenario**: GitLab CI/CD pipeline testing.
+### GitLab CI with Minikube
 
 **.gitlab-ci.yml**:
 ```yaml
@@ -499,9 +789,11 @@ test-skupper:
 
 ---
 
-### Use Case 14: Pre-commit Hook Validation
+---
 
-**Scenario**: Validate skewer.yaml changes before committing.
+### Pre-commit Hook Validation
+
+**What you accomplish**: Block invalid skewer.yaml commits before they reach CI.
 
 **.git/hooks/pre-commit**:
 ```bash
@@ -534,11 +826,15 @@ chmod +x .git/hooks/pre-commit
 
 ---
 
-## Development Workflows
+---
 
-### Use Case 15: Interactive Demo + Extensions
+## Develop Iteratively
 
-**Scenario**: Start base demo, then add observability without restart.
+Work on Skupper examples with fast feedback loops.
+
+### Add Observability to Running Demo
+
+**What you accomplish**: Install Skupper Network Observer, Prometheus, or load generators without restarting clusters.
 
 **Terminal 1** (main demo):
 ```bash
@@ -585,9 +881,9 @@ sketcher demo-extend examples/skewer-extend-loadgen.yaml
 
 ---
 
-### Use Case 16: Rapid Iteration with --debug
+### Debug Failing Steps
 
-**Scenario**: Debugging a failing skewer.yaml step.
+**What you accomplish**: Find the exact command and output causing test failures.
 
 **Commands**:
 ```bash
@@ -614,9 +910,9 @@ sketcher demo --debug my-example.yaml
 
 ---
 
-### Use Case 17: Local Development Against Remote Cluster
+### Test Against Remote Staging Cluster
 
-**Scenario**: Develop locally, test against staging cluster.
+**What you accomplish**: Iterate on local frontend while connecting to real backend in staging.
 
 **Setup**:
 ```bash
@@ -644,11 +940,13 @@ sketcher demo my-app.yaml \
 
 ---
 
-## Production Patterns
+## Production Validation
 
-### Use Case 18: GitOps with Custom Resources
+Test deployment strategies before production rollout.
 
-**Scenario**: Production deployment using Skupper CRs (no CLI).
+### Validate GitOps Deployment
+
+**What you accomplish**: Test Skupper custom resources (CRs) before ArgoCD/Flux applies them in production.
 
 **Directory structure**:
 ```
@@ -703,9 +1001,9 @@ sketcher test skewer.yaml
 
 ---
 
-### Use Case 19: Blue/Green Deployment Testing
+### Test Blue/Green Deployment
 
-**Scenario**: Test blue/green deployment with Skupper.
+**What you accomplish**: Verify traffic shifting works between blue and green versions before production cutover.
 
 **skewer.yaml**:
 ```yaml
@@ -748,9 +1046,9 @@ steps:
 
 ---
 
-### Use Case 20: Disaster Recovery Testing
+### Test Disaster Recovery Failover
 
-**Scenario**: Test failover between primary and DR site.
+**What you accomplish**: Verify DR site takes over when primary fails, before a real disaster.
 
 **skewer.yaml**:
 ```yaml
@@ -794,6 +1092,91 @@ steps:
     commands:
       dr:
         - await_http_ok: [service/app, "http://{}:8080/health"]
+```
+
+---
+
+## Troubleshoot Problems
+
+### Resolve Common Issues
+
+**Problem**: NodePort not accessible at localhost on macOS.
+
+**Solution**: 
+```bash
+# If using Colima:
+colima status  # Check if network: true
+colima stop
+colima start --network-address
+
+# If using Docker Desktop:
+# NodePort should work out-of-the-box. Check Docker Desktop is running.
+```
+
+---
+
+**Problem**: Minikube LoadBalancer stuck in "Pending".
+
+**Solution**:
+```bash
+# Terminal 1: Start tunnel (requires sudo)
+minikube tunnel
+
+# Terminal 2: Verify LoadBalancer IP assigned
+kubectl get svc
+```
+
+---
+
+**Problem**: Skupper command fails with "ingress not available".
+
+**Solution**: Check cluster provider and adjust ingress type:
+
+```bash
+# Kind with --kind flag → use NodePort
+skupper site create west --ingress nodeport --ingress-host localhost
+
+# Kind with --kind-lb OR Minikube → use LoadBalancer (default)
+skupper site create west --enable-link-access
+```
+
+---
+
+**Problem**: skewer.yaml validation fails.
+
+**Solution**:
+```bash
+# Check YAML syntax
+python3 -c "import yaml; yaml.safe_load(open('skewer.yaml'))"
+
+# Dry-run generate to find missing fields
+skewer generate skewer.yaml --dry-run
+```
+
+---
+
+**Problem**: Subnet conflict (192.168.49.0/24 already used).
+
+**Solution**:
+```bash
+# Remove existing Podman network (might be from another user)
+sudo podman network rm minikube
+```
+
+---
+
+**Problem**: `sketcher` command not found after installation.
+
+**Solution**:
+```bash
+# Verify installation
+sketcher --help   # Go binary (run, demo, test)
+skewer --help     # Python package (generate, resolve)
+
+# If missing, reinstall:
+pip install sketcher  # Python tool
+# Copy prebuilt binary or build from source:
+sudo cp sketcher-linux-x64 /usr/local/bin/sketcher
 ```
 
 ---
@@ -862,5 +1245,23 @@ Windows:
 
 ---
 
-**Last Updated**: 2026-08-07  
-**See Also**: `PLAN.md`, `examples-guide.md`, `README.md`
+## About This Guide
+
+This documentation uses the **Seven-Action Documentation Model** to organize content around what you need to accomplish:
+
+| Section | Primary Action | Reader Outcome |
+|---------|---------------|----------------|
+| Quick Start Testing | **Explore** | Try Sketcher in under 60 seconds with minimal setup |
+| Choose Your Platform | **Appraise** | Select the right cluster provider for your environment and performance requirements |
+| Automate Testing | **Develop** | Integrate Sketcher into CI/CD pipelines and pre-commit hooks |
+| Develop Iteratively | **Practice** | Debug failures, extend running demos, test against remote clusters |
+| Production Validation | **Develop** | Test GitOps deployments, blue/green rollouts, and disaster recovery before production |
+| Troubleshoot Problems | **Troubleshoot** | Diagnose and resolve networking, ingress, and configuration issues |
+| Quick Reference | **Remember** | Retrieve commands and decision trees for platform selection |
+
+Each use case leads with **what you accomplish** instead of describing features, so you can find the section that matches your immediate goal.
+
+---
+
+**Last Updated**: 2026-08-11  
+**See Also**: `README.md`, `DEVELOPERS.md`, `SCHEMA.md`

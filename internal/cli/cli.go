@@ -10,6 +10,7 @@ import (
 	"github.com/skupperproject/sketcher/internal/demo"
 	"github.com/skupperproject/sketcher/internal/executor"
 	"github.com/skupperproject/sketcher/internal/kind"
+	"github.com/skupperproject/sketcher/internal/logger"
 	"github.com/skupperproject/sketcher/internal/minikube"
 	"github.com/skupperproject/sketcher/internal/utils"
 )
@@ -36,6 +37,8 @@ func Execute(version string) error {
 		return executeTest()
 	case "clean":
 		return executeClean()
+	case "view-log":
+		return executeViewLog()
 	default:
 		return fmt.Errorf("unknown command: %s", command)
 	}
@@ -145,6 +148,8 @@ func executeTest() error {
 
 	configureLogging(*verbose, *quiet)
 
+	os.Setenv("SKETCHER_TEST", "1")
+
 	yamlFile := "skewer.yaml"
 	if fs.NArg() > 0 {
 		yamlFile = fs.Arg(0)
@@ -186,6 +191,15 @@ func executeClean() error {
 	return nil
 }
 
+func executeViewLog() error {
+	if len(os.Args) < 3 {
+		return fmt.Errorf("usage: sketcher view-log <log-file>")
+	}
+
+	logFile := os.Args[2]
+	return logger.ViewLog(logFile)
+}
+
 func printHelp() {
 	fmt.Println("Usage: sketcher <command> [options]")
 	fmt.Println()
@@ -195,6 +209,7 @@ func printHelp() {
 	fmt.Println("  demo-extend  Extend an active demo with additional steps")
 	fmt.Println("  test         Generate README (via skewer), run main steps, and run all extension files")
 	fmt.Println("  clean        Remove generated files (.demo-context.json)")
+	fmt.Println("  view-log     View a log file in human-readable format")
 }
 
 func configureLogging(verbose, quiet bool) {
