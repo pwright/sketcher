@@ -1,0 +1,61 @@
+name: Build Latest Binaries
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Build Linux binary
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o sketcher-linux cmd/sketcher/main.go
+          chmod +x sketcher-linux
+
+      - name: Build macOS binary (ARM64)
+        run: |
+          GOOS=darwin GOARCH=arm64 go build -o sketcher-mac-arm64 cmd/sketcher/main.go
+          chmod +x sketcher-mac-arm64
+
+      - name: Build macOS binary (AMD64)
+        run: |
+          GOOS=darwin GOARCH=amd64 go build -o sketcher-mac-amd64 cmd/sketcher/main.go
+          chmod +x sketcher-mac-amd64
+
+      - name: Update latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest Development Build
+          prerelease: true
+          body: |
+            Latest development binaries built from commit ${{ github.sha }}
+
+            **Branch:** ${{ github.ref_name }}
+            **Commit:** ${{ github.sha }}
+            **Date:** ${{ github.event.head_commit.timestamp }}
+
+            ## Downloads
+            - `sketcher-linux` - Linux AMD64
+            - `sketcher-mac-arm64` - macOS Apple Silicon (M1/M2/M3)
+            - `sketcher-mac-amd64` - macOS Intel
+
+            These are development builds and may be unstable.
+          files: |
+            sketcher-linux
+            sketcher-mac-arm64
+            sketcher-mac-amd64
