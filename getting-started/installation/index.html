@@ -579,52 +579,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#install-both-tools" class="md-nav__link">
+  <a href="#quick-install-recommended" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Install Both Tools
+        Quick Install (Recommended)
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Install Both Tools">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#install-skewer-python" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Install skewer (Python)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#install-sketcher-go" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Install sketcher (Go)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#development-builds" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Development Builds
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -633,6 +594,28 @@
     <span class="md-ellipsis">
       
         Verify Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#for-example-authors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For Example Authors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-build-from-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced: Build from Source
       
     </span>
   </a>
@@ -1787,71 +1770,116 @@
 
 
 <h1 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h1>
-<h2 id="install-both-tools">Install Both Tools<a class="headerlink" href="#install-both-tools" title="Permanent link">&para;</a></h2>
-<p>Sketcher consists of two command-line tools:</p>
-<ul>
-<li><strong><code>skewer</code></strong> (Python) - Processes YAML and generates documentation</li>
-<li><strong><code>sketcher</code></strong> (Go) - Executes steps, provisions clusters, runs tests</li>
-</ul>
-<h3 id="install-skewer-python">Install skewer (Python)<a class="headerlink" href="#install-skewer-python" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>sketcher
+<h2 id="quick-install-recommended">Quick Install (Recommended)<a class="headerlink" href="#quick-install-recommended" title="Permanent link">&para;</a></h2>
+<p><strong>For most users</strong>: Install the <code>sketcher</code> command-line tool to run and test Skupper examples.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Linux / macOS</label><label for="__tabbed_1_2">Manual Download</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl<span class="w"> </span>https://pwright.github.io/sketcher/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
 </span></code></pre></div>
-<h3 id="install-sketcher-go">Install sketcher (Go)<a class="headerlink" href="#install-sketcher-go" title="Permanent link">&para;</a></h3>
-<p><strong>Option 1: Use pre-built binaries</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span>/path/to/sketcher
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>sudo<span class="w"> </span>cp<span class="w"> </span>sketcher-linux-x64<span class="w"> </span>/usr/local/bin/sketcher<span class="w">     </span><span class="c1"># Linux</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># or</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>sudo<span class="w"> </span>cp<span class="w"> </span>sketcher-mac-arm64<span class="w"> </span>/usr/local/bin/sketcher<span class="w">     </span><span class="c1"># macOS (Apple Silicon)</span>
+</div>
+<div class="tabbed-block">
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Linux</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>curl<span class="w"> </span>-LO<span class="w"> </span>https://github.com/pwright/sketcher/releases/latest/download/sketcher-linux
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>chmod<span class="w"> </span>+x<span class="w"> </span>sketcher-linux
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>sudo<span class="w"> </span>mv<span class="w"> </span>sketcher-linux<span class="w"> </span>/usr/local/bin/sketcher
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># macOS (Apple Silicon)</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>curl<span class="w"> </span>-LO<span class="w"> </span>https://github.com/pwright/sketcher/releases/latest/download/sketcher-mac-arm64
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>chmod<span class="w"> </span>+x<span class="w"> </span>sketcher-mac-arm64
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>sudo<span class="w"> </span>mv<span class="w"> </span>sketcher-mac-arm64<span class="w"> </span>/usr/local/bin/sketcher
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1"># macOS (Intel)</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>curl<span class="w"> </span>-LO<span class="w"> </span>https://github.com/pwright/sketcher/releases/latest/download/sketcher-mac-amd64
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>chmod<span class="w"> </span>+x<span class="w"> </span>sketcher-mac-amd64
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>sudo<span class="w"> </span>mv<span class="w"> </span>sketcher-mac-amd64<span class="w"> </span>/usr/local/bin/sketcher
 </span></code></pre></div>
-<p><strong>Option 2: Build from source</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>go<span class="w"> </span>build<span class="w"> </span>-o<span class="w"> </span>sketcher<span class="w"> </span>cmd/sketcher/main.go
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>sudo<span class="w"> </span>mv<span class="w"> </span>sketcher<span class="w"> </span>/usr/local/bin/
-</span></code></pre></div>
-<h3 id="development-builds">Development Builds<a class="headerlink" href="#development-builds" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Build for current platform</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>just<span class="w"> </span>build-go
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Build for all platforms (Linux x64, macOS ARM64)</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>just<span class="w"> </span>build-go-all
+</div>
+</div>
+</div>
+<p><strong>Installation options:</strong></p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Interactive mode (asks before installing)</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>curl<span class="w"> </span>https://pwright.github.io/sketcher/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span>--interactive
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Install to /opt/sketcher/bin instead of ~/.local/bin</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>curl<span class="w"> </span>https://pwright.github.io/sketcher/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span>--scheme<span class="w"> </span>opt
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Install specific version</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>curl<span class="w"> </span>https://pwright.github.io/sketcher/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span>--version<span class="w"> </span>v1.0.0
 </span></code></pre></div>
 <h2 id="verify-installation">Verify Installation<a class="headerlink" href="#verify-installation" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>skewer<span class="w"> </span>--help<span class="w">       </span><span class="c1"># Python tool (resolve, generate, clean)</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>sketcher<span class="w"> </span>--help<span class="w">     </span><span class="c1"># Go tool (run, demo, test, clean)</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>sketcher<span class="w"> </span>--help<span class="w">     </span><span class="c1"># Should show sketcher commands</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>sketcher<span class="w"> </span>--version<span class="w">  </span><span class="c1"># Should show version number</span>
+</span></code></pre></div>
+<h2 id="for-example-authors">For Example Authors<a class="headerlink" href="#for-example-authors" title="Permanent link">&para;</a></h2>
+<p><strong>Only needed if you're creating Skupper examples and need to generate README documentation.</strong></p>
+<p>Sketcher uses two tools:</p>
+<ul>
+<li><strong><code>sketcher</code></strong> (Go) - Executes steps, provisions clusters, runs tests <em>(installed above)</em></li>
+<li><strong><code>skewer</code></strong> (Python) - Generates documentation from YAML</li>
+</ul>
+<p>Most users only need <code>sketcher</code>. Install <code>skewer</code> if you need to:</p>
+<ul>
+<li>Generate or update README.md files from <code>skewer.yaml</code></li>
+<li>Create new Skupper examples</li>
+<li>Use <code>skewer resolve</code> to migrate old YAML files</li>
+</ul>
+<p><strong>Install skewer (Python):</strong></p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pip<span class="w"> </span>install<span class="w"> </span>sketcher
+</span></code></pre></div>
+<p><strong>Verify both tools:</strong></p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>skewer<span class="w"> </span>--help<span class="w">       </span><span class="c1"># Python tool (resolve, generate, clean)</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>sketcher<span class="w"> </span>--help<span class="w">     </span><span class="c1"># Go tool (run, demo, test, clean)</span>
+</span></code></pre></div>
+<h2 id="advanced-build-from-source">Advanced: Build from Source<a class="headerlink" href="#advanced-build-from-source" title="Permanent link">&para;</a></h2>
+<p><strong>Building the Go binary:</strong></p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Clone the repository</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/pwright/sketcher
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nb">cd</span><span class="w"> </span>sketcher
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1"># Build for current platform</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>just<span class="w"> </span>build-go
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1"># Build for all platforms (Linux x64, macOS ARM64, macOS Intel)</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>just<span class="w"> </span>build-go-all
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1"># Install locally</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>sudo<span class="w"> </span>cp<span class="w"> </span>build/sketcher-*<span class="w"> </span>/usr/local/bin/sketcher
 </span></code></pre></div>
 <h2 id="create-your-skupper-example">Create Your Skupper Example<a class="headerlink" href="#create-your-skupper-example" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">cd</span><span class="w"> </span>my-skupper-example/
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">cd</span><span class="w"> </span>my-skupper-example/
 </span></code></pre></div>
 <p>Create a <code>skewer.yaml</code> file describing your example:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>&lt;editor&gt;<span class="w"> </span>skewer.yaml
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>&lt;editor&gt;<span class="w"> </span>skewer.yaml
 </span></code></pre></div>
 <h2 id="generate-readme-and-test">Generate README and Test<a class="headerlink" href="#generate-readme-and-test" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Generate README.md from your skewer.yaml (Python tool)</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>skewer<span class="w"> </span>generate<span class="w"> </span>skewer.yaml
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Run the example steps in demo mode (pauses before cleanup) (Go tool)</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>sketcher<span class="w"> </span>demo<span class="w"> </span>skewer.yaml
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Run full automated test (no pause) (Go tool)</span>
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>sketcher<span class="w"> </span><span class="nb">test</span><span class="w"> </span>skewer.yaml
-</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
-</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1"># Debugging flags (works with demo, run, test commands)</span>
-</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>sketcher<span class="w"> </span>demo<span class="w"> </span>skewer.yaml<span class="w"> </span>--verbose<span class="w">  </span><span class="c1"># Show debug output (what&#39;s executing)</span>
-</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>sketcher<span class="w"> </span>demo<span class="w"> </span>skewer.yaml<span class="w"> </span>--debug<span class="w">    </span><span class="c1"># Show debug output on failure</span>
-</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>sketcher<span class="w"> </span>demo<span class="w"> </span>skewer.yaml<span class="w"> </span>--quiet<span class="w">    </span><span class="c1"># Suppress progress messages</span>
-</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>
-</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="c1"># Cluster provider options</span>
-</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>sketcher<span class="w"> </span>demo<span class="w"> </span>skewer.yaml<span class="w"> </span>--kind<span class="w">        </span><span class="c1"># Use Kind with NodePort ingress</span>
-</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>sketcher<span class="w"> </span>demo<span class="w"> </span>skewer.yaml<span class="w"> </span>--kind-lb<span class="w">     </span><span class="c1"># Use Kind with MetalLB (LoadBalancer ingress)</span>
-</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>sketcher<span class="w"> </span><span class="nb">test</span><span class="w"> </span>skewer.yaml<span class="w"> </span>--kind<span class="w">        </span><span class="c1"># Use Kind for test runs</span>
-</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>sketcher<span class="w"> </span><span class="nb">test</span><span class="w"> </span>skewer.yaml<span class="w"> </span>--kind-lb<span class="w">     </span><span class="c1"># Use Kind with LoadBalancer for tests</span>
-</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>
-</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="c1"># Note: Ingress type comparison</span>
-</span><span id="__span-7-22"><a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="c1">#   - Minikube (default): LoadBalancer ingress</span>
-</span><span id="__span-7-23"><a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="c1">#   - Kind (--kind): NodePort ingress</span>
-</span><span id="__span-7-24"><a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="c1">#   - Kind (--kind-lb): LoadBalancer ingress via MetalLB</span>
-</span><span id="__span-7-25"><a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="c1"># macOS users: Kind requires Docker Desktop or Colima to be running</span>
-</span><span id="__span-7-26"><a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="c1">#   - Docker Desktop: NodePort works out-of-the-box</span>
-</span><span id="__span-7-27"><a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="c1">#   - Colima: Start with `colima start --network-address` for direct NodePort access</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Generate README.md from your skewer.yaml (Python tool)</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>skewer<span class="w"> </span>generate<span class="w"> </span>skewer.yaml
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Run the example steps in demo mode (pauses before cleanup) (Go tool)</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>sketcher<span class="w"> </span>demo<span class="w"> </span>skewer.yaml
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Run full automated test (no pause) (Go tool)</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>sketcher<span class="w"> </span><span class="nb">test</span><span class="w"> </span>skewer.yaml
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1"># Debugging flags (works with demo, run, test commands)</span>
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>sketcher<span class="w"> </span>demo<span class="w"> </span>skewer.yaml<span class="w"> </span>--verbose<span class="w">  </span><span class="c1"># Show debug output (what&#39;s executing)</span>
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>sketcher<span class="w"> </span>demo<span class="w"> </span>skewer.yaml<span class="w"> </span>--debug<span class="w">    </span><span class="c1"># Show debug output on failure</span>
+</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>sketcher<span class="w"> </span>demo<span class="w"> </span>skewer.yaml<span class="w"> </span>--quiet<span class="w">    </span><span class="c1"># Suppress progress messages</span>
+</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>
+</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="c1"># Cluster provider options</span>
+</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>sketcher<span class="w"> </span>demo<span class="w"> </span>skewer.yaml<span class="w"> </span>--kind<span class="w">        </span><span class="c1"># Use Kind with NodePort ingress</span>
+</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>sketcher<span class="w"> </span>demo<span class="w"> </span>skewer.yaml<span class="w"> </span>--kind-lb<span class="w">     </span><span class="c1"># Use Kind with MetalLB (LoadBalancer ingress)</span>
+</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>sketcher<span class="w"> </span><span class="nb">test</span><span class="w"> </span>skewer.yaml<span class="w"> </span>--kind<span class="w">        </span><span class="c1"># Use Kind for test runs</span>
+</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>sketcher<span class="w"> </span><span class="nb">test</span><span class="w"> </span>skewer.yaml<span class="w"> </span>--kind-lb<span class="w">     </span><span class="c1"># Use Kind with LoadBalancer for tests</span>
+</span><span id="__span-9-20"><a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>
+</span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="c1"># Note: Ingress type comparison</span>
+</span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="c1">#   - Minikube (default): LoadBalancer ingress</span>
+</span><span id="__span-9-23"><a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="c1">#   - Kind (--kind): NodePort ingress</span>
+</span><span id="__span-9-24"><a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="c1">#   - Kind (--kind-lb): LoadBalancer ingress via MetalLB</span>
+</span><span id="__span-9-25"><a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="c1"># macOS users: Kind requires Docker Desktop or Colima to be running</span>
+</span><span id="__span-9-26"><a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="c1">#   - Docker Desktop: NodePort works out-of-the-box</span>
+</span><span id="__span-9-27"><a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="c1">#   - Colima: Start with `colima start --network-address` for direct NodePort access</span>
 </span></code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
