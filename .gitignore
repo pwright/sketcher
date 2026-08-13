@@ -1,12 +1,32 @@
+# Python artifacts
 __pycache__/
 *.pyc
 *.pyo
 *.egg-info/
-/README.html
-/htmlcov
-/.coverage
-link.yaml
-.claude/
 /build/
 /dist/
 *.egg
+.pytest_cache/
+
+# Go artifacts
+sketcher-bin
+sketcher-linux-x64
+sketcher-mac-arm64
+sketcher/main
+!sketcher/  # Keep the Python package directory
+
+# Documentation
+/README.html
+/htmlcov
+/.coverage
+
+# Development
+.claude/
+link.yaml
+
+# Temporary files
+*.tmp
+*.bak
+*~
+bin/
+*.log

@@ -1,0 +1,380 @@
+<!-- NOTE: This file is generated from skewer.yaml.  Do not edit it directly. -->
+
+# Skupper enables inter-cluster TCP communication
+
+[![main](https://github.com/pwright/sketcher/actions/workflows/main.yaml/badge.svg)](https://github.com/pwright/sketcher/actions/workflows/main.yaml)
+
+#### TCP tunneling with Skupper
+
+This example is part of a [suite of examples][examples] showing the
+different ways you can use [Skupper][website] to connect services
+across cloud providers, data centers, and edge sites.
+
+[website]: https://skupper.io/
+[examples]: https://skupper.io/examples/index.html
+
+#### Contents
+
+* [Overview](#overview)
+* [Prerequisites](#prerequisites)
+* [Sites](#sites)
+* [Step 1: Access your Kubernetes clusters](#step-1-access-your-kubernetes-clusters)
+* [Step 2: Create your Kubernetes namespaces](#step-2-create-your-kubernetes-namespaces)
+* [Step 3: Install Skupper on your Kubernetes clusters](#step-3-install-skupper-on-your-kubernetes-clusters)
+* [Step 4: Install the Skupper command-line tool](#step-4-install-the-skupper-command-line-tool)
+* [Step 5: Deploy the TCP echo server](#step-5-deploy-the-tcp-echo-server)
+* [Step 6: Create your sites](#step-6-create-your-sites)
+* [Step 7: Link your sites](#step-7-link-your-sites)
+* [Step 8: Expose the TCP echo service](#step-8-expose-the-tcp-echo-service)
+* [Step 9: Access the public service remotely](#step-9-access-the-public-service-remotely)
+* [Cleaning up](#cleaning-up)
+* [Summary](#summary)
+* [Next steps](#next-steps)
+* [About this example](#about-this-example)
+
+## Overview
+
+This is a simple demonstration of TCP communication tunneled through
+a Skupper network from a private to a public cluster and back again.
+During development of this demonstration, the private cluster was
+running locally, while the public cluster was on AWS.
+
+We set up a Skupper network between the two clusters, start a TCP
+echo-server on the public cluster, then communicate to it from the
+private cluster and receive its replies. At no time is any port
+opened on the machine running the private cluster.
+
+<img src="images/entities.svg" width="800"/>
+
+## Prerequisites
+
+* Access to at least one Kubernetes cluster, from [any provider you
+  choose][kube-providers].
+
+* The `kubectl` command-line tool, version 1.15 or later
+  ([installation guide][install-kubectl]).
+
+[kube-providers]: https://skupper.io/start/kubernetes.html
+[install-kubectl]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
+
+## Sites
+
+This example uses the following sites:
+
+_**Public:**_
+
+~~~ shell
+export KUBECONFIG=~/.kube/config-public
+kubectl config set-context --current --namespace public
+~~~
+
+_**Private:**_
+
+~~~ shell
+export KUBECONFIG=~/.kube/config-private
+kubectl config set-context --current --namespace private
+~~~
+
+## Step 1: Access your Kubernetes clusters
+
+Skupper is designed for use with multiple Kubernetes clusters.
+The `skupper` and `kubectl` commands use your
+[kubeconfig][kubeconfig] and current context to select the cluster
+and namespace where they operate.
+
+[kubeconfig]: https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/
+
+This example uses multiple cluster contexts at once. The
+`KUBECONFIG` environment variable tells `skupper` and `kubectl`
+which kubeconfig to use.
+
+For each cluster, open a new terminal window.  In each terminal,
+set the `KUBECONFIG` environment variable to a different path and
+log in to your cluster.
+
+_**Public:**_
+
+~~~ shell
+export KUBECONFIG=/tmp/public-kubeconfig
+<provider-specific login command>
+~~~
+
+_**Private:**_
+
+~~~ shell
+export KUBECONFIG=/tmp/private-kubeconfig
+<provider-specific login command>
+~~~
+
+**Note:** The login procedure varies by provider.
+
+## Step 2: Create your Kubernetes namespaces
+
+The example application has different components deployed to
+different Kubernetes namespaces.  To set up our example, we need
+to create the namespaces.
+
+For each cluster, use `kubectl create namespace` and `kubectl
+config set-context` to create the namespace you wish to use and
+set the namespace on your current context.
+
+_**Public:**_
+
+~~~ shell
+kubectl create namespace public
+kubectl config set-context --current --namespace public
+~~~
+
+_**Private:**_
+
+~~~ shell
+kubectl create namespace private
+kubectl config set-context --current --namespace private
+~~~
+
+## Step 3: Install Skupper on your Kubernetes clusters
+
+Using Skupper on Kubernetes requires the installation of the
+Skupper custom resource definitions (CRDs) and the Skupper
+controller.
+
+For each cluster, use `kubectl apply` with the Skupper
+installation YAML to install the CRDs and controller.
+
+_**Public:**_
+
+~~~ shell
+kubectl apply -f https://skupper.io/v2/install.yaml
+~~~
+
+_**Private:**_
+
+~~~ shell
+kubectl apply -f https://skupper.io/v2/install.yaml
+~~~
+
+## Step 4: Install the Skupper command-line tool
+
+This example uses the Skupper command-line tool to create Skupper
+resources.  You need to install the `skupper` command only once
+for each development environment.
+
+On Linux or Mac, you can use the install script (inspect it
+[here][install-script]) to download and extract the command:
+
+~~~ shell
+curl https://skupper.io/v2/install.sh | sh
+~~~
+
+The script installs the command under your home directory.  It
+prompts you to add the command to your path if necessary.
+
+For Windows and other installation options, see [Installing
+Skupper][install-docs].
+
+[install-script]: https://github.com/skupperproject/skupper-website/blob/main/input/install.sh
+[install-docs]: https://skupper.io/#installation
+
+## Step 5: Deploy the TCP echo server
+
+_**Public:**_
+
+~~~ shell
+kubectl apply -f ./public/tcp-echo-deployment.yaml
+~~~
+
+## Step 6: Create your sites
+
+A Skupper _site_ is a location where your application workloads
+are running.  Sites are linked together to form a network for your
+application.
+
+For each namespace, use `skupper site create` with a site name of
+your choice.  This creates the site resource and deploys the
+Skupper router to the namespace.
+
+**Note:** If you are using Minikube, you need to [start minikube
+tunnel][minikube-tunnel] before you run `skupper site create`.
+
+<!-- XXX Explain enabling link acesss on one of the sites -->
+
+[minikube-tunnel]: https://skupper.io/start/minikube.html#running-minikube-tunnel
+
+_**Public:**_
+
+~~~ shell
+skupper site create public --enable-link-access
+~~~
+
+_Sample output:_
+
+~~~ console
+$ skupper site create public --enable-link-access
+Waiting for status...
+Site "public" is configured. Check the status to see when it is ready
+~~~
+
+_**Private:**_
+
+~~~ shell
+skupper site create private
+~~~
+
+_Sample output:_
+
+~~~ console
+$ skupper site create private
+Waiting for status...
+Site "private" is configured. Check the status to see when it is ready
+~~~
+
+You can use `skupper site status` at any time to check the status
+of your site.
+
+## Step 7: Link your sites
+
+A Skupper _link_ is a channel for communication between two sites.
+Links serve as a transport for application connections and
+requests.
+
+Creating a link requires the use of two Skupper commands in
+conjunction: `skupper token issue` and `skupper token redeem`.
+The `skupper token issue` command generates a secret token that
+can be transferred to a remote site and redeemed for a link to the
+issuing site.  The `skupper token redeem` command uses the token
+to create the link.
+
+**Note:** The link token is truly a *secret*.  Anyone who has the
+token can link to your site.  Make sure that only those you trust
+have access to it.
+
+First, use `skupper token issue` in Public to generate the token.
+Then, use `skupper token redeem` in Private to link the sites.
+
+_**Public:**_
+
+~~~ shell
+skupper token issue ~/secret.token
+~~~
+
+_Sample output:_
+
+~~~ console
+$ skupper token issue ~/secret.token
+Waiting for token status ...
+
+Grant "west-cad4f72d-2917-49b9-ab66-cdaca4d6cf9c" is ready
+Token file /run/user/1000/skewer/secret.token created
+
+Transfer this file to a remote site. At the remote site,
+create a link to this site using the "skupper token redeem" command:
+
+	skupper token redeem <file>
+
+The token expires after 1 use(s) or after 15m0s.
+~~~
+
+_**Private:**_
+
+~~~ shell
+skupper token redeem ~/secret.token
+~~~
+
+_Sample output:_
+
+~~~ console
+$ skupper token redeem ~/secret.token
+Waiting for token status ...
+Token "west-cad4f72d-2917-49b9-ab66-cdaca4d6cf9c" has been redeemed
+You can now safely delete /run/user/1000/skewer/secret.token
+~~~
+
+If your terminal sessions are on different machines, you may need
+to use `scp` or a similar tool to transfer the token securely.  By
+default, tokens expire after a single use or 15 minutes after
+being issued.
+
+## Step 8: Expose the TCP echo service
+
+Create a listener in the private cluster where the client runs and
+a connector in the public cluster where the echo server runs. This
+makes the public echo service reachable inside the private
+namespace as `tcp-go-echo` on port 9090.
+
+_**Private:**_
+
+~~~ shell
+skupper listener create tcp-go-echo 9090
+~~~
+
+_**Public:**_
+
+~~~ shell
+skupper connector create tcp-go-echo 9090 --workload deployment/tcp-go-echo
+~~~
+
+## Step 9: Access the public service remotely
+
+From the private cluster, forward traffic to the exposed echo
+service and verify that it responds.
+
+_**Private:**_
+
+~~~ shell
+kubectl get svc
+kubectl port-forward service/tcp-go-echo 9090:9090
+telnet 0.0.0.0 9090
+~~~
+
+_Sample output:_
+
+~~~ console
+$ telnet 0.0.0.0 9090
+hello, Skupper
+tcp-go-echo-7ddbc7756c-wxgcq : HELLO, SKUPPER
+~~~
+
+## Cleaning up
+
+To remove Skupper and the other resources from this exercise, use
+the following commands.
+
+_**Public:**_
+
+~~~ shell
+skupper site delete --all
+kubectl delete -f ./public/tcp-echo-deployment.yaml
+~~~
+
+_**Private:**_
+
+~~~ shell
+skupper site delete --all
+~~~
+
+## Summary
+
+The TCP echo server runs only in the public cluster, but Skupper
+exposes it as a local service in the private cluster. By forwarding
+to the private cluster, you can reach the public service without
+opening any ports on the private side. Skupper handles the encrypted
+traffic between clusters transparently, so the echo replies arrive as
+if the service were running locally.
+
+## Next steps
+
+Check out the other [examples][examples] on the Skupper website.
+
+## About this example
+
+This example was produced using [Skewer][skewer], a library for
+documenting and testing Skupper examples.
+
+[skewer]: https://github.com/skupperproject/skewer
+
+Skewer provides utility functions for generating the README and
+running the example steps.  Use the `./plano` command in the project
+root to see what is available.
+
+To quickly stand up the example using Minikube, try the `./plano demo`
+command.

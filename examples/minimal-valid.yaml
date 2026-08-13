@@ -1,0 +1,12 @@
+title: Minimal Example
+sites:
+  local:
+    platform: kubernetes
+    namespace: default
+    env:
+      KUBECONFIG: ~/.kube/config
+steps:
+- title: Hello World
+  commands:
+    local:
+    - run: echo "Hello from Sketcher"

@@ -13,7 +13,7 @@ def generate_readme(yaml_file: str, output_file: Optional[str] = None, quiet: bo
 
     Args:
         yaml_file: Path to resolved skewer.yaml file
-        output_file: Output path (default: README.md in same directory as yaml_file)
+        output_file: Output path (default: README.md if input is skewer.yaml, otherwise <file-root>.md)
         quiet: If True, suppress progress messages
 
     Returns:
@@ -22,7 +22,10 @@ def generate_readme(yaml_file: str, output_file: Optional[str] = None, quiet: bo
     yaml_path = Path(yaml_file).resolve()
 
     if output_file is None:
-        output_file = yaml_path.parent / "README.md"
+        if yaml_path.name == "skewer.yaml":
+            output_file = yaml_path.parent / "README.md"
+        else:
+            output_file = yaml_path.with_suffix(".md")
     else:
         output_file = Path(output_file)
 

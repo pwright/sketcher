@@ -1,12 +1,20 @@
 title: Skupper Podman-to-Podman Link
-subtitle: Hello World frontend/backend using Sketcher with Podman sites and static linking
-overview: "This example demonstrates linking two Podman-based Skupper sites\n\
-  running on the same host using static link files.\n\nIt contains two services:\n\n\
-  * A backend service that exposes an `/api/hello` endpoint running in the\n  \
-  east Podman namespace.\n\n* A frontend service that sends greetings to the backend\
-  \ running in the\n  west Podman namespace.\n\nThe sites use static link files for\
-  \ connection - west accepts links\nand generates a static link file, which east\
-  \ uses to connect.\n"
+subtitle: Hello World frontend/backend using Sketcher with Podman sites and static
+  linking
+overview: |
+  This example demonstrates linking two Podman-based Skupper sites
+  running on the same host using static link files.
+
+  It contains two services:
+
+  * A backend service that exposes an `/api/hello` endpoint running in the
+    east Podman namespace.
+
+  * A frontend service that sends greetings to the backend running in the
+    west Podman namespace.
+
+  The sites use static link files for connection - west accepts links
+  and generates a static link file, which east uses to connect.
 sites:
   west:
     title: West
@@ -23,11 +31,10 @@ sites:
 steps:
 - title: Create the west site directory structure
   numbered: true
-  preamble: 'Create the west namespace directory with the Site CR that enables
-
+  preamble: |-
+    Create the west namespace directory with the Site CR that enables
     link acceptance. The `linkAccess: default` setting triggers automatic
-
-    RouterAccess generation with ports 55671 (inter-router) and 45671 (edge).'
+    RouterAccess generation with ports 55671 (inter-router) and 45671 (edge).
   commands:
     west:
     - run: mkdir -p west
@@ -40,14 +47,12 @@ steps:
         spec:
           linkAccess: default  # auto-creates RouterAccess with ports 55671/45671
         EOF
-
 - title: Create the west listener
   numbered: true
-  preamble: 'Create a listener in west for the backend service on port 8080.
-
+  preamble: |-
+    Create a listener in west for the backend service on port 8080.
     This creates a local endpoint that will forward traffic to the backend
-
-    connector in east via the Skupper network.'
+    connector in east via the Skupper network.
   commands:
     west:
     - run: |
@@ -61,36 +66,39 @@ steps:
           port: 8080
           host: backend
         EOF
-
+- title: Copy west resources to skupper input directory
+  numbered: true
+  preamble: Copy the west site resources to the location where skupper expects them.
+  commands:
+    west:
+    - run: mkdir -p $HOME/.local/share/skupper/namespaces/west/input/resources
+    - run: cp west/*.yaml $HOME/.local/share/skupper/namespaces/west/input/resources/
 - title: Bootstrap the west site
   numbered: true
-  preamble: 'Bootstrap the west site using Podman. This will generate the static
-
-    link files at ~/.local/share/skupper/namespaces/west/runtime/links/'
+  preamble: |-
+    Bootstrap the west site using Podman. This will generate the static
+    link files at ~/.local/share/skupper/namespaces/west/runtime/links/
   commands:
     west:
     - run: skupper system start -n west
       output: |
         Site "west" is ready
-
 - title: Copy the static link file for east
   numbered: true
-  preamble: 'Copy the generated static link file from west to the east namespace
-
+  preamble: |-
+    Copy the generated static link file from west to the east namespace
     directory. The static link contains the Link CR with endpoints (127.0.0.1:55671
-
-    and 127.0.0.1:45671) plus a Secret with mTLS credentials.'
+    and 127.0.0.1:45671) plus a Secret with mTLS credentials.
   commands:
     west:
-    - run: cp ~/.local/share/skupper/namespaces/west/runtime/links/link-west-127.0.0.1.yaml ./east/link-to-west.yaml
-
+    - run: cp $HOME/.local/share/skupper/namespaces/west/runtime/links/link-west-127.0.0.1.yaml
+        ./east/link-to-west.yaml
 - title: Create the east site directory structure
   numbered: true
-  preamble: 'Create the east namespace directory with the Site CR. Note that
-
+  preamble: |-
+    Create the east namespace directory with the Site CR. Note that
     east does not have linkAccess set - it only connects out, does not
-
-    accept incoming links.'
+    accept incoming links.
   commands:
     east:
     - run: mkdir -p east
@@ -102,14 +110,12 @@ steps:
           name: east
         # no linkAccess - east only connects out
         EOF
-
 - title: Create the east connector
   numbered: true
-  preamble: 'Create a connector in east that binds the backend routing key to
-
+  preamble: |-
+    Create a connector in east that binds the backend routing key to
     the local backend service on port 8080. This tells Skupper where to
-
-    forward traffic that arrives with the "backend" routing key.'
+    forward traffic that arrives with the "backend" routing key.
   commands:
     east:
     - run: |
@@ -123,26 +129,23 @@ steps:
           port: 8080
           selector: app=backend
         EOF
-
 - title: Bootstrap the east site
   numbered: true
-  preamble: 'Bootstrap the east site using Podman. The site will read the
-
+  preamble: |-
+    Bootstrap the east site using Podman. The site will read the
     link-to-west.yaml file and establish a mutual TLS connection to
-
-    west using the embedded credentials.'
+    west using the embedded credentials.
   commands:
     east:
     - run: skupper system start -n east
       output: |
         Site "east" is ready
         Link to "west" is ready
-
 - title: Deploy the backend service
   numbered: true
-  preamble: 'Run the backend container in the east namespace using Podman.
-
-    The backend listens on port 8080 and returns greetings.'
+  preamble: |-
+    Run the backend container in the east namespace using Podman.
+    The backend listens on port 8080 and returns greetings.
   commands:
     east:
     - run: |
@@ -152,14 +155,12 @@ steps:
           -l app=backend \
           -p 8081:8080 \
           quay.io/skupper/hello-world-backend
-
 - title: Deploy the frontend service
   numbered: true
-  preamble: 'Run the frontend container in the west namespace using Podman.
-
+  preamble: |-
+    Run the frontend container in the west namespace using Podman.
     The frontend connects to "backend:8080" which resolves through the
-
-    Skupper network to the east backend.'
+    Skupper network to the east backend.
   commands:
     west:
     - run: |
@@ -168,22 +169,19 @@ steps:
           --network skupper-west \
           -p 8080:8080 \
           quay.io/skupper/hello-world-frontend
-
 - title: Access the frontend service
   numbered: true
-  preamble: 'The frontend is now accessible at http://localhost:8080.
-
+  preamble: |-
+    The frontend is now accessible at http://localhost:8080.
     Open a browser and navigate to that URL to see the hello-world
-
-    application working across the two Podman sites.'
-  postamble: 'The frontend in west will send requests to the backend in east
-
-    via the Skupper link. You should see greetings from the backend pods.'
+    application working across the two Podman sites.
+  postamble: |-
+    The frontend in west will send requests to the backend in east
+    via the Skupper link. You should see greetings from the backend pods.
   commands:
     west:
     - run: curl http://localhost:8080/api/health
-      output: 'OK'
-
+      output: OK
 - name: cleaning_up
   title: Cleaning up
   numbered: false
@@ -195,27 +193,16 @@ steps:
     east:
     - run: skupper system stop -n east
     - run: podman rm -f backend
-
-summary: 'This example demonstrates Podman-to-Podman linking using static link files.
-
+summary: |
+  This example demonstrates Podman-to-Podman linking using static link files.
   The west site enables linkAccess which auto-generates RouterAccess and creates
-
   static link files at runtime. These files contain Link CRs with TCP endpoints
-
   (127.0.0.1:55671 and 127.0.0.1:45671) plus TLS Secrets for mutual authentication.
 
-
   The east site includes the copied static link file in its input resources before
-
   bootstrapping. When skupper system start runs, it reads the link file and
-
   establishes a connection to west using the embedded mTLS credentials.
 
-
   Since both sites run on the same host, the link file uses 127.0.0.1. For sites
-
   on different machines, replace 127.0.0.1 with the actual IP/hostname of the
-
   accepting site before copying the link file.
-
-  '

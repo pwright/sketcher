@@ -1,0 +1,398 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://skupper.io/schemas/skewer.json",
+  "title": "Skewer YAML Schema",
+  "description": "Schema for Skupper example configuration files (skewer.yaml)",
+  "type": "object",
+  "required": ["title", "sites", "steps"],
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "The example's title (required)",
+      "minLength": 1,
+      "examples": ["Skupper Hello World", "Multi-cloud database replication"]
+    },
+    "subtitle": {
+      "type": "string",
+      "description": "Optional subtitle for the example",
+      "examples": ["A minimal HTTP application deployed across Kubernetes clusters"]
+    },
+    "workflow": {
+      "type": ["string", "null"],
+      "description": "GitHub workflow filename (default: 'main.yaml'). Set to null to disable workflow badge.",
+      "default": "main.yaml",
+      "examples": ["main.yaml", "test.yaml", null]
+    },
+    "overview": {
+      "type": "string",
+      "description": "Text introducing your example (supports @default@ placeholder)",
+      "examples": ["This example demonstrates how to connect services across clusters using Skupper."]
+    },
+    "prerequisites": {
+      "type": "string",
+      "description": "Text describing prerequisites (supports @default@ placeholder for standard text)",
+      "examples": ["@default@", "@default@\n\nAdditionally, you need access to two Kubernetes clusters."]
+    },
+    "sites": {
+      "type": "object",
+      "description": "Map of named deployment sites (Kubernetes clusters, Podman, Docker, or Linux environments)",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/definitions/Site"
+      },
+      "examples": [
+        {
+          "west": {
+            "title": "West",
+            "platform": "kubernetes",
+            "namespace": "west",
+            "env": {
+              "KUBECONFIG": "~/.kube/config-west"
+            }
+          },
+          "east": {
+            "title": "East",
+            "platform": "podman",
+            "env": {
+              "SKUPPER_PLATFORM": "podman"
+            }
+          }
+        }
+      ]
+    },
+    "steps": {
+      "type": "array",
+      "description": "List of workflow steps to execute",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/Step"
+      }
+    },
+    "summary": {
+      "type": "string",
+      "description": "Text to summarize what the user accomplished (supports @default@ placeholder)",
+      "examples": ["@default@\n\nYou have successfully deployed a multi-cluster application."]
+    },
+    "next_steps": {
+      "type": "string",
+      "description": "Text linking to more examples (supports @default@ placeholder for standard text)",
+      "examples": ["@default@", "Check out our advanced examples at https://skupper.io/examples"]
+    },
+    "about_this_example": {
+      "type": "string",
+      "description": "Additional information about this example"
+    }
+  },
+  "definitions": {
+    "Site": {
+      "type": "object",
+      "description": "A deployment site (Kubernetes cluster, Podman, Docker, or Linux environment)",
+      "required": ["platform"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Display title for the site (defaults to capitalized site name)",
+          "examples": ["West", "Production Cluster", "Edge Node"]
+        },
+        "platform": {
+          "type": "string",
+          "description": "Deployment platform type",
+          "enum": ["kubernetes", "podman", "docker", "linux"],
+          "examples": ["kubernetes", "podman"]
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Kubernetes namespace (required for kubernetes platform)",
+          "minLength": 1,
+          "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+          "examples": ["west", "skupper-demo", "production"]
+        },
+        "env": {
+          "type": "object",
+          "description": "Environment variables for this site",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "examples": [
+            {
+              "KUBECONFIG": "~/.kube/config-west"
+            },
+            {
+              "SKUPPER_PLATFORM": "podman"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "platform": {
+                "const": "kubernetes"
+              }
+            }
+          },
+          "then": {
+            "required": ["namespace"],
+            "properties": {
+              "env": {
+                "required": ["KUBECONFIG"],
+                "properties": {
+                  "KUBECONFIG": {
+                    "type": "string",
+                    "description": "Path to kubeconfig file (tilde ~ is replaced with temp dir during testing)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "platform": {
+                "enum": ["podman", "docker", "linux"]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "env": {
+                "required": ["SKUPPER_PLATFORM"],
+                "properties": {
+                  "SKUPPER_PLATFORM": {
+                    "type": "string",
+                    "enum": ["podman", "docker", "linux"],
+                    "description": "Platform identifier for Skupper"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Step": {
+      "type": "object",
+      "description": "A workflow step containing commands to execute",
+      "required": ["title"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Step title (required)",
+          "minLength": 1,
+          "examples": ["Create your sites", "Expose the backend service", "Access the frontend"]
+        },
+        "numbered": {
+          "type": "boolean",
+          "description": "Whether to number this step in the generated README (default: true)",
+          "default": true
+        },
+        "name": {
+          "type": "string",
+          "description": "Optional internal name for the step",
+          "examples": ["create-sites", "expose-backend"]
+        },
+        "preamble": {
+          "type": "string",
+          "description": "Text before the commands (supports @default@ placeholder)",
+          "examples": ["A Skupper site is a location where components of your application are running."]
+        },
+        "commands": {
+          "type": "object",
+          "description": "Named groups of commands, keyed by site name",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Command"
+            }
+          },
+          "examples": [
+            {
+              "west": [
+                {
+                  "run": "kubectl create namespace west"
+                },
+                {
+                  "run": "skupper init"
+                }
+              ],
+              "east": [
+                {
+                  "run": "kubectl create namespace east"
+                }
+              ]
+            }
+          ]
+        },
+        "postamble": {
+          "type": "string",
+          "description": "Text after the commands (supports @default@ placeholder)",
+          "examples": ["You have now created Skupper sites in both namespaces."]
+        }
+      }
+    },
+    "Command": {
+      "type": "object",
+      "description": "A command to execute on a site",
+      "additionalProperties": false,
+      "properties": {
+        "run": {
+          "type": "string",
+          "description": "Shell command to execute",
+          "examples": [
+            "kubectl create namespace west",
+            "skupper init --site-name west",
+            "curl http://localhost:8080"
+          ]
+        },
+        "expect_failure": {
+          "type": "boolean",
+          "description": "If true, expect the command to fail and continue (for testing error conditions)",
+          "default": false
+        },
+        "apply": {
+          "type": "string",
+          "description": "When to apply this command: 'readme' (only in generated README), 'test' (only during test/demo execution), or omit for both",
+          "enum": ["readme", "test"],
+          "examples": ["readme", "test"]
+        },
+        "output": {
+          "type": "string",
+          "description": "Sample output to include in the generated README (for documentation only, not validation)",
+          "examples": [
+            "Skupper is now installed in namespace 'west'.",
+            "NAME       TYPE           CLUSTER-IP      EXTERNAL-IP\nfrontend   LoadBalancer   10.103.232.28   10.103.232.28"
+          ]
+        },
+        "await_resource": {
+          "type": "string",
+          "description": "Wait for a Kubernetes resource to be ready (test/demo only)",
+          "pattern": "^[a-z]+/[a-z0-9-]+$",
+          "examples": ["deployment/frontend", "service/backend", "deployment/skupper-router"]
+        },
+        "await_ingress": {
+          "type": "string",
+          "description": "Wait for a service to have an external hostname or IP (test/demo only)",
+          "pattern": "^service/[a-z0-9-]+$",
+          "examples": ["service/frontend", "service/loadbalancer"]
+        },
+        "await_http_ok": {
+          "type": "array",
+          "description": "Wait for an HTTP endpoint to return 200 OK (test/demo only). First element is resource, second is URL template with {} placeholder.",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "string"
+          },
+          "examples": [
+            ["service/frontend", "http://{}:8080/api/health"],
+            ["service/web", "http://{}:80/"]
+          ]
+        },
+        "await_console_ok": {
+          "type": "boolean",
+          "description": "Wait for Skupper console to be ready (test/demo only)",
+          "examples": [true]
+        },
+        "await_port": {
+          "type": "integer",
+          "description": "Wait for a TCP port to be available (test/demo only)",
+          "minimum": 1,
+          "maximum": 65535,
+          "examples": [8080, 5432, 3306]
+        }
+      },
+      "anyOf": [
+        {
+          "required": ["run"]
+        },
+        {
+          "required": ["await_resource"]
+        },
+        {
+          "required": ["await_ingress"]
+        },
+        {
+          "required": ["await_http_ok"]
+        },
+        {
+          "required": ["await_console_ok"]
+        },
+        {
+          "required": ["await_port"]
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "title": "Skupper Hello World",
+      "subtitle": "A minimal HTTP application deployed across Kubernetes clusters",
+      "workflow": "main.yaml",
+      "overview": "This example demonstrates the basics of connecting services across Kubernetes clusters using Skupper.",
+      "prerequisites": "@default@",
+      "sites": {
+        "west": {
+          "title": "West",
+          "platform": "kubernetes",
+          "namespace": "west",
+          "env": {
+            "KUBECONFIG": "~/.kube/config-west"
+          }
+        },
+        "east": {
+          "title": "East",
+          "platform": "kubernetes",
+          "namespace": "east",
+          "env": {
+            "KUBECONFIG": "~/.kube/config-east"
+          }
+        }
+      },
+      "steps": [
+        {
+          "title": "Configure separate console sessions",
+          "preamble": "Skupper is designed for multicluster application deployments.",
+          "commands": {
+            "west": [
+              {
+                "run": "export KUBECONFIG=~/.kube/config-west",
+                "apply": "readme"
+              }
+            ],
+            "east": [
+              {
+                "run": "export KUBECONFIG=~/.kube/config-east",
+                "apply": "readme"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Create your sites",
+          "preamble": "A Skupper site is a location where components of your application are running.",
+          "commands": {
+            "west": [
+              {
+                "run": "skupper init --site-name west",
+                "output": "Skupper is now installed in namespace 'west'."
+              }
+            ],
+            "east": [
+              {
+                "run": "skupper init --site-name east",
+                "output": "Skupper is now installed in namespace 'east'."
+              }
+            ]
+          }
+        }
+      ],
+      "summary": "@default@",
+      "next_steps": "@default@"
+    }
+  ]
+}
