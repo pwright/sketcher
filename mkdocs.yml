@@ -1,0 +1,124 @@
+site_name: Sketcher Documentation
+site_description: Automate Skupper example documentation and testing from a single YAML file
+site_url: https://pwright.github.io/sketcher/
+repo_url: https://github.com/pwright/sketcher
+repo_name: pwright/sketcher
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.action.edit
+    - content.action.view
+    - toc.follow
+    - toc.integrate
+
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
+
+plugins:
+  - search:
+      lang: en
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+  - tags
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - footnotes
+  - attr_list
+  - def_list
+  - md_in_html
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/pwright/sketcher
+  version:
+    provider: mike
+
+nav:
+  - Home: index.md
+
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quick-start.md
+      - Try Sketcher: getting-started/try-sketcher.md
+
+  - User Guide:
+      - Writing skewer.yaml: user-guide/writing-skewer-yaml.md
+      - Common Patterns: user-guide/common-patterns.md
+      - Demo and Test Modes: user-guide/demo-test-modes.md
+      - Extending Demos: user-guide/extending-demos.md
+      - Cluster Providers: user-guide/cluster-providers.md
+      - Use Cases: user-guide/use-cases.md
+
+  - Configuration:
+      - JSON Schema:
+          - Quick Start: configuration/json-schema-quickstart.md
+          - Schema Summary: configuration/json-schema-summary.md
+      - Logging:
+          - Overview: configuration/logging.md
+          - Example: configuration/logging-example.md
+          - Reference: configuration/logging-reference.md
+
+  - Migration:
+      - From Skewer: migration/from-skewer.md
+      - Compatibility: migration/compatibility.md
+
+  - Development:
+      - Developer Guide: development/developer-guide.md
+      - Logging Implementation: development/logging-implementation.md
+      - Schema Documentation: development/schema.md
+      - Contributing: development/contributing.md
+
+  - Troubleshooting:
+      - Common Issues: troubleshooting/common-issues.md
+      - Viewing Logs: troubleshooting/viewing-logs.md

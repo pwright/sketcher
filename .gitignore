@@ -19,6 +19,7 @@ sketcher-linux
 /README.html
 /htmlcov
 /.coverage
+/site/
 
 # Development
 .claude/

@@ -285,12 +285,12 @@ You can now:
 ## Next Steps
 
 **Learn more about validation**:
-- [`SCHEMA.md`](../SCHEMA.md) - Complete field reference and validation rules
-- [`json-schema-summary.md`](./json-schema-summary.md) - Implementation details
+- [Schema Documentation](../development/schema.md) - Complete field reference and validation rules
+- [Schema Summary](./json-schema-summary.md) - Implementation details
 
 **Troubleshoot issues**:
-- [`docs/use-cases.md`](./use-cases.md) - Platform-specific workflows and troubleshooting
-- [`README.md`](../README.md) - Full Sketcher documentation
+- [Use Cases](../user-guide/use-cases.md) - Platform-specific workflows and troubleshooting
+- [Sketcher Documentation](../index.md) - Full Sketcher documentation
 
 ---
 
@@ -314,4 +314,4 @@ You can now:
 
 ## About This Guide
 
-This quick start uses the **Explore** action from the Seven-Action Documentation Model - it helps you try JSON Schema validation with minimal commitment (5 minutes, one dependency) to see if it fits your workflow. For complete field reference and integration patterns, see [`SCHEMA.md`](../SCHEMA.md).
+This quick start uses the **Explore** action from the Seven-Action Documentation Model - it helps you try JSON Schema validation with minimal commitment (5 minutes, one dependency) to see if it fits your workflow. For complete field reference and integration patterns, see [Schema Documentation](../development/schema.md).
