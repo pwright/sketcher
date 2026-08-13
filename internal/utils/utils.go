@@ -125,12 +125,35 @@ func WriteFile(path, content string) error {
 	return os.WriteFile(path, []byte(content), 0644)
 }
 
-// ReadYAML reads and parses a YAML file
-func ReadYAML(path string, out interface{}) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
+// ReadYAML reads and parses a YAML file from a local path or URL
+func ReadYAML(pathOrURL string, out interface{}) error {
+	var data []byte
+	var err error
+
+	// Check if it's a URL
+	if strings.HasPrefix(pathOrURL, "http://") || strings.HasPrefix(pathOrURL, "https://") {
+		Info("Fetching YAML from URL: %s", pathOrURL)
+		resp, err := http.Get(pathOrURL)
+		if err != nil {
+			return fmt.Errorf("failed to fetch URL: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("failed to fetch URL: HTTP %d", resp.StatusCode)
+		}
+
+		data, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read URL response: %w", err)
+		}
+	} else {
+		data, err = os.ReadFile(pathOrURL)
+		if err != nil {
+			return err
+		}
 	}
+
 	return yaml.Unmarshal(data, out)
 }
 

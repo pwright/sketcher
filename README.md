@@ -79,6 +79,9 @@ cd /path/to/your/skupper-example
 # 3. Run demo (creates clusters, deploys app, pauses for inspection)
 sketcher demo --kind skewer.yaml
 
+# Alternatively, run directly from a URL (e.g., GitHub gist):
+sketcher demo --kind https://gist.githubusercontent.com/user/id/raw/skewer.yaml
+
 # 4. Explore the running application
 # - Open URLs shown in demo output
 # - Check Skupper network status
@@ -151,6 +154,10 @@ sketcher demo skewer.yaml --kind-lb     # Use Kind with MetalLB (LoadBalancer in
 sketcher test skewer.yaml --kind        # Use Kind for test runs
 sketcher test skewer.yaml --kind-lb     # Use Kind with LoadBalancer for tests
 
+# Run from URL (GitHub gist, raw GitHub file, etc.)
+sketcher demo --kind https://gist.githubusercontent.com/user/id/raw/skewer.yaml
+sketcher test --kind https://raw.githubusercontent.com/org/repo/main/skewer.yaml
+
 # Note: Ingress type comparison
 #   - Minikube (default): LoadBalancer ingress
 #   - Kind (--kind): NodePort ingress
@@ -161,6 +168,11 @@ sketcher test skewer.yaml --kind-lb     # Use Kind with LoadBalancer for tests
 ```
 
 **Note:** The `sketcher test` command requires both tools - it calls `skewer generate` to create documentation, then runs the execution steps.
+
+**URL Support:** All sketcher commands (`demo`, `run`, `test`) support loading YAML files from URLs. This is useful for:
+- Sharing examples via GitHub gists
+- Running examples directly from documentation
+- CI/CD pipelines that fetch configuration from central repositories
 
 ## Write Your skewer.yaml
 
