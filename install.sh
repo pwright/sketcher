@@ -569,7 +569,7 @@ main() {
 
         log "Testing the Sketcher command"
 
-        run "${sketcher_bin_dir}/sketcher" --help > /dev/null
+        run "${sketcher_bin_dir}/sketcher" > /dev/null
 
         print_result "OK"
 
