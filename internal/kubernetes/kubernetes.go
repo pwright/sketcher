@@ -12,11 +12,24 @@ import (
 
 // CheckEnvironment verifies required programs are available
 func CheckEnvironment() error {
-	required := []string{"base64", "curl", "kubectl", "skupper"}
+	// Hard requirements - must be present
+	required := []string{"base64", "curl", "kubectl"}
 
+	// Optional programs - warn if missing but continue
+	optional := []string{"skupper"}
+
+	// Check required programs (hard failure)
 	for _, program := range required {
 		if err := utils.CheckProgram(program); err != nil {
 			return err
+		}
+	}
+
+	// Check optional programs (warning only)
+	for _, program := range optional {
+		if err := utils.CheckProgram(program); err != nil {
+			utils.Warn("Optional program '%s' is not available - related commands will fail if executed", program)
+			utils.Warn("Install skupper: https://skupper.io/install/")
 		}
 	}
 
