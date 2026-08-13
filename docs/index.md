@@ -37,12 +37,12 @@ Both read the same `skewer.yaml` file describing your Skupper example's sites, s
 # Install sketcher
 curl https://pwright.github.io/sketcher/install.sh | sh
 
-# Run demo
-sketcher demo --kind skewer.yaml
+```
 
-# For example authors: install skewer to generate docs
-pip install sketcher
-skewer generate skewer.yaml
+Clone repo and change to examples dir:
+```
+# Run demo
+./sketcher-linux demo skupper-example-hello-goodbye.yaml 
 ```
 
 ## Key Features
