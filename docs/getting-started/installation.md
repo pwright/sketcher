@@ -1,51 +1,97 @@
 # Installation
 
-## Install Both Tools
+## Quick Install (Recommended)
 
-Sketcher consists of two command-line tools:
+**For most users**: Install the `sketcher` command-line tool to run and test Skupper examples.
 
-- **`skewer`** (Python) - Processes YAML and generates documentation
-- **`sketcher`** (Go) - Executes steps, provisions clusters, runs tests
+=== "Linux / macOS"
+    ```bash
+    curl https://pwright.github.io/sketcher/install.sh | sh
+    ```
 
-### Install skewer (Python)
+=== "Manual Download"
+    ```bash
+    # Linux
+    curl -LO https://github.com/pwright/sketcher/releases/latest/download/sketcher-linux
+    chmod +x sketcher-linux
+    sudo mv sketcher-linux /usr/local/bin/sketcher
 
-```bash
-pip install sketcher
-```
+    # macOS (Apple Silicon)
+    curl -LO https://github.com/pwright/sketcher/releases/latest/download/sketcher-mac-arm64
+    chmod +x sketcher-mac-arm64
+    sudo mv sketcher-mac-arm64 /usr/local/bin/sketcher
 
-### Install sketcher (Go)
+    # macOS (Intel)
+    curl -LO https://github.com/pwright/sketcher/releases/latest/download/sketcher-mac-amd64
+    chmod +x sketcher-mac-amd64
+    sudo mv sketcher-mac-amd64 /usr/local/bin/sketcher
+    ```
 
-**Option 1: Use pre-built binaries**
-
-```bash
-cd /path/to/sketcher
-sudo cp sketcher-linux-x64 /usr/local/bin/sketcher     # Linux
-# or
-sudo cp sketcher-mac-arm64 /usr/local/bin/sketcher     # macOS (Apple Silicon)
-```
-
-**Option 2: Build from source**
-
-```bash
-go build -o sketcher cmd/sketcher/main.go
-sudo mv sketcher /usr/local/bin/
-```
-
-### Development Builds
+**Installation options:**
 
 ```bash
-# Build for current platform
-just build-go
+# Interactive mode (asks before installing)
+curl https://pwright.github.io/sketcher/install.sh | sh -s -- --interactive
 
-# Build for all platforms (Linux x64, macOS ARM64)
-just build-go-all
+# Install to /opt/sketcher/bin instead of ~/.local/bin
+curl https://pwright.github.io/sketcher/install.sh | sh -s -- --scheme opt
+
+# Install specific version
+curl https://pwright.github.io/sketcher/install.sh | sh -s -- --version v1.0.0
 ```
 
 ## Verify Installation
 
 ```bash
+sketcher --help     # Should show sketcher commands
+sketcher --version  # Should show version number
+```
+
+## For Example Authors
+
+**Only needed if you're creating Skupper examples and need to generate README documentation.**
+
+Sketcher uses two tools:
+
+- **`sketcher`** (Go) - Executes steps, provisions clusters, runs tests *(installed above)*
+- **`skewer`** (Python) - Generates documentation from YAML
+
+Most users only need `sketcher`. Install `skewer` if you need to:
+
+- Generate or update README.md files from `skewer.yaml`
+- Create new Skupper examples
+- Use `skewer resolve` to migrate old YAML files
+
+**Install skewer (Python):**
+
+```bash
+pip install sketcher
+```
+
+**Verify both tools:**
+
+```bash
 skewer --help       # Python tool (resolve, generate, clean)
 sketcher --help     # Go tool (run, demo, test, clean)
+```
+
+## Advanced: Build from Source
+
+**Building the Go binary:**
+
+```bash
+# Clone the repository
+git clone https://github.com/pwright/sketcher
+cd sketcher
+
+# Build for current platform
+just build-go
+
+# Build for all platforms (Linux x64, macOS ARM64, macOS Intel)
+just build-go-all
+
+# Install locally
+sudo cp build/sketcher-* /usr/local/bin/sketcher
 ```
 
 ## Create Your Skupper Example

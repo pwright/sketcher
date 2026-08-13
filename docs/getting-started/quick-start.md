@@ -5,21 +5,25 @@ Get up and running with Sketcher in minutes.
 ## Prerequisites
 
 - Docker Desktop (macOS) or Docker (Linux) installed and running
-- Python 3.9 or later
-- Go 1.23 or later (if building from source)
+- Python 3.9 or later *(only needed if you want to generate README documentation)*
 
 ## Installation
 
 ```bash
-# Install skewer (Python tool)
-pip install sketcher
-
-# Install sketcher (Go tool)
-curl -LO https://github.com/skupperproject/sketcher/releases/latest/download/sketcher-linux-x64
-chmod +x sketcher-linux-x64
-sudo mv sketcher-linux-x64 /usr/local/bin/sketcher
+# Install sketcher
+curl https://pwright.github.io/sketcher/install.sh | sh
 
 # Verify
+sketcher --help
+```
+
+**For example authors** (optional - only needed to generate README.md):
+
+```bash
+# Install skewer (Python tool for documentation generation)
+pip install sketcher
+
+# Verify both tools
 skewer --help
 sketcher --help
 ```

@@ -20,11 +20,16 @@ With Sketcher, you can:
 
 ## How It Works
 
-Sketcher uses two command-line tools:
-- **`skewer`** (Python) - Processes YAML and generates documentation
-- **`sketcher`** (Go) - Executes steps, provisions clusters, runs tests
+Sketcher consists of two command-line tools:
+- **`sketcher`** (Go) - Executes steps, provisions clusters, runs tests *(needed by everyone)*
+- **`skewer`** (Python) - Generates documentation from YAML *(only needed by example authors)*
 
 Both read the same `skewer.yaml` file describing your Skupper example's sites, steps, and commands.
+
+**Most users only need `sketcher`** - the Go binary that runs demos and tests. Install it with:
+```bash
+curl https://pwright.github.io/sketcher/install.sh | sh
+```
 
 ---
 
@@ -65,11 +70,8 @@ Both read the same `skewer.yaml` file describing your Skupper example's sites, s
 **Prerequisites**: Docker Desktop (macOS) or Docker (Linux) installed and running.
 
 ```bash
-# 1. Install both tools
-pip install sketcher
-curl -LO https://github.com/skupperproject/sketcher/releases/latest/download/sketcher-linux-x64
-chmod +x sketcher-linux-x64
-sudo mv sketcher-linux-x64 /usr/local/bin/sketcher
+# 1. Install sketcher
+curl https://pwright.github.io/sketcher/install.sh | sh
 
 # 2. Get an example (or use your own)
 cd /path/to/your/skupper-example
@@ -93,39 +95,25 @@ sketcher demo --kind skewer.yaml
 
 ## Set Up Your Own Example
 
-**Install both tools:**
+**Install sketcher:**
 
 ```bash
-# Install skewer (Python - for YAML processing and doc generation)
+# Quick install (recommended)
+curl https://pwright.github.io/sketcher/install.sh | sh
+
+# Verify installation
+sketcher --help
+```
+
+**For example authors** (only needed to generate README documentation):
+
+```bash
+# Install the Python tool to generate docs from skewer.yaml
 pip install sketcher
 
-# Install sketcher (Go - for execution)
-# Option 1: Use pre-built binaries
-cd /path/to/sketcher
-sudo cp sketcher-linux-x64 /usr/local/bin/sketcher     # Linux
-# or
-sudo cp sketcher-mac-arm64 /usr/local/bin/sketcher     # macOS (Apple Silicon)
-
-# Option 2: Build from source
-go build -o sketcher cmd/sketcher/main.go
-sudo mv sketcher /usr/local/bin/
-```
-
-**Development builds:**
-
-```bash
-# Build for current platform
-just build-go
-
-# Build for all platforms (Linux x64, macOS ARM64)
-just build-go-all
-```
-
-**Verify installation:**
-
-```bash
-skewer --help       # Python tool (resolve, generate, clean)
-sketcher --help     # Go tool (run, demo, test, clean)
+# Verify both tools
+skewer --help       # Python tool (generate documentation)
+sketcher --help     # Go tool (run, demo, test)
 ```
 
 **Create your Skupper example:**

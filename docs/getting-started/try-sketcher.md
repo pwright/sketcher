@@ -5,11 +5,8 @@
 **Prerequisites**: Docker Desktop (macOS) or Docker (Linux) installed and running.
 
 ```bash
-# 1. Install both tools
-pip install sketcher
-curl -LO https://github.com/skupperproject/sketcher/releases/latest/download/sketcher-linux-x64
-chmod +x sketcher-linux-x64
-sudo mv sketcher-linux-x64 /usr/local/bin/sketcher
+# 1. Install sketcher
+curl https://pwright.github.io/sketcher/install.sh | sh
 
 # 2. Get an example (or use your own)
 cd /path/to/your/skupper-example

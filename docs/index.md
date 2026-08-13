@@ -24,22 +24,25 @@ With Sketcher, you can:
 
 ## How It Works
 
-Sketcher uses two command-line tools:
+Sketcher consists of two command-line tools:
 
-- **`skewer`** (Python) - Processes YAML and generates documentation
-- **`sketcher`** (Go) - Executes steps, provisions clusters, runs tests
+- **`sketcher`** (Go) - Executes steps, provisions clusters, runs tests *(needed by everyone)*
+- **`skewer`** (Python) - Generates documentation from YAML *(only needed by example authors)*
 
 Both read the same `skewer.yaml` file describing your Skupper example's sites, steps, and commands.
 
 ## Quick Example
 
 ```bash
-# Install
-pip install sketcher
-curl -LO https://github.com/skupperproject/sketcher/releases/latest/download/sketcher-linux-x64
+# Install sketcher
+curl https://pwright.github.io/sketcher/install.sh | sh
 
 # Run demo
 sketcher demo --kind skewer.yaml
+
+# For example authors: install skewer to generate docs
+pip install sketcher
+skewer generate skewer.yaml
 ```
 
 ## Key Features
