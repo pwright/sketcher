@@ -2,6 +2,13 @@
 
 **Automate Skupper example documentation and testing from a single YAML file.**
 
+!!! warning "Experimental Project - Learning & Testing Only"
+    **This project is experimental and intended for learning and testing purposes only.**
+    
+    Sketcher is an experimental replacement for [skupperproject/skewer](https://github.com/skupperproject/skewer). It is currently in active development and should not be used in production environments. APIs, configuration formats, and behavior may change without notice.
+    
+    For production use, please refer to the official [Skupper project](https://skupper.io).
+
 ## What You Can Accomplish
 
 With Sketcher, you can:
