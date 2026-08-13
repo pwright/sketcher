@@ -19,6 +19,11 @@ var NewModel = model.NewModel
 
 // RunSteps executes all steps from a skewer.yaml file
 func RunSteps(yamlFile string, kubeconfigs []string, workDir string, debug, quiet bool) error {
+	return RunStepsWithMode(yamlFile, kubeconfigs, workDir, debug, quiet, "", "")
+}
+
+// RunStepsWithMode executes all steps with an execution mode (kind, minikube, etc.)
+func RunStepsWithMode(yamlFile string, kubeconfigs []string, workDir string, debug, quiet bool, execMode, version string) error {
 	utils.Info("Running steps from %s", yamlFile)
 
 	// Setup signal handler and cleanup
@@ -68,8 +73,21 @@ func RunSteps(yamlFile string, kubeconfigs []string, workDir string, debug, quie
 		runType = "test"
 	}
 
+	// Determine execution mode if not specified
+	if execMode == "" {
+		if os.Getenv("SKETCHER_KIND") != "" {
+			execMode = "kind"
+		} else if os.Getenv("SKETCHER_MINIKUBE") != "" {
+			execMode = "minikube"
+		} else if len(kubeconfigs) > 0 {
+			execMode = "native"
+		} else {
+			execMode = "unknown"
+		}
+	}
+
 	// Create logger
-	log, err := logger.New(runType, yamlFile, workDir)
+	log, err := logger.New(runType, yamlFile, workDir, execMode, version)
 	if err != nil {
 		utils.Warn("Failed to create logger: %v", err)
 		log = nil // Continue without logging

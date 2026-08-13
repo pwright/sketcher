@@ -15,8 +15,13 @@ import (
 	"github.com/skupperproject/sketcher/internal/utils"
 )
 
+// globalVersion stores the version for use by other functions
+var globalVersion string
+
 // Execute runs the CLI with the given version
 func Execute(version string) error {
+	globalVersion = version // Store for use in logging
+
 	if len(os.Args) < 2 {
 		printHelp()
 		return nil
@@ -172,7 +177,10 @@ func executeTest() error {
 }
 
 func executeClean() error {
-	// Remove __pycache__ directories (not needed for Go)
+	fs := flag.NewFlagSet("clean", flag.ExitOnError)
+	logs := fs.Bool("logs", false, "Also remove log files from /tmp/sk-logs/")
+	fs.Parse(os.Args[2:])
+
 	// Remove .demo-context.json files
 	matches, err := filepath.Glob("**/.demo-context.json")
 	if err != nil {
@@ -184,6 +192,25 @@ func executeClean() error {
 			utils.Warn("Failed to remove %s: %v", match, err)
 		} else {
 			utils.Info("Removed %s", match)
+		}
+	}
+
+	// Remove log files if requested
+	if *logs {
+		logDir := "/tmp/sk-logs"
+		if _, err := os.Stat(logDir); err == nil {
+			logMatches, err := filepath.Glob(filepath.Join(logDir, "*.log"))
+			if err != nil {
+				utils.Warn("Failed to find log files: %v", err)
+			} else {
+				for _, logFile := range logMatches {
+					if err := os.Remove(logFile); err != nil {
+						utils.Warn("Failed to remove %s: %v", logFile, err)
+					} else {
+						utils.Info("Removed %s", logFile)
+					}
+				}
+			}
 		}
 	}
 
@@ -209,6 +236,7 @@ func printHelp() {
 	fmt.Println("  demo-extend  Extend an active demo with additional steps")
 	fmt.Println("  test         Generate README (via skewer), run main steps, and run all extension files")
 	fmt.Println("  clean        Remove generated files (.demo-context.json)")
+	fmt.Println("               Options: --logs (also remove log files from /tmp/sk-logs/)")
 	fmt.Println("  view-log     View a log file in human-readable format")
 }
 
@@ -251,7 +279,12 @@ func runWithKind(yamlFile string, debug, quiet, useMetalLB bool) error {
 		return err
 	}
 
-	return executor.RunSteps(yamlFile, k.Kubeconfigs, k.WorkDir, debug, quiet)
+	os.Setenv("SKETCHER_KIND", "1")
+	execMode := "kind"
+	if useMetalLB {
+		execMode = "kind-metallb"
+	}
+	return executor.RunStepsWithMode(yamlFile, k.Kubeconfigs, k.WorkDir, debug, quiet, execMode, globalVersion)
 }
 
 func runWithMinikube(yamlFile string, debug, quiet bool) error {
@@ -268,7 +301,8 @@ func runWithMinikube(yamlFile string, debug, quiet bool) error {
 		return err
 	}
 
-	return executor.RunSteps(yamlFile, mk.Kubeconfigs, mk.WorkDir, debug, quiet)
+	os.Setenv("SKETCHER_MINIKUBE", "1")
+	return executor.RunStepsWithMode(yamlFile, mk.Kubeconfigs, mk.WorkDir, debug, quiet, "minikube", globalVersion)
 }
 
 func testWithKind(yamlFile string, debug, quiet, noExtensions, useMetalLB bool) error {

@@ -84,10 +84,12 @@ Created comprehensive documentation:
 
 ### Location
 ```
-<work-dir>/sketcher-{type}-{timestamp}.log
+/tmp/sk-logs/sketcher-{type}-{timestamp}.log
 ```
 
-Example: `/tmp/sketcher-xyz123/sketcher-demo-20260812-143022.log`
+Example: `/tmp/sk-logs/sketcher-demo-20260812-143022.log`
+
+**Important**: Logs are stored in `/tmp/sk-logs/` separately from work directories to prevent deletion during cleanup. This means logs persist across multiple demo runs even when work directories are cleaned up.
 
 ### Entry Types
 
@@ -107,12 +109,15 @@ All entries have `timestamp` and `type` fields. Type-specific fields:
 ### Generate a log
 ```bash
 sketcher demo skewer.yaml
-# Prints: Log file: /tmp/sketcher-xyz123/sketcher-demo-20260812-143022.log
+# Prints: Log file: /tmp/sk-logs/sketcher-demo-20260812-143022.log
 ```
 
 ### View log
 ```bash
-sketcher view-log /tmp/sketcher-xyz123/sketcher-demo-20260812-143022.log
+sketcher view-log /tmp/sk-logs/sketcher-demo-20260812-143022.log
+
+# Or view the most recent log
+sketcher view-log $(ls -t /tmp/sk-logs/*.log | head -1)
 ```
 
 ### Query with jq

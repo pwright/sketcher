@@ -4,7 +4,7 @@ Every `sketcher demo`, `sketcher test`, and `sketcher run` execution automatical
 
 ## Log File Location
 
-Log files are automatically created in the work directory with the naming pattern:
+Log files are automatically created in `/tmp/sk-logs/` with the naming pattern:
 ```
 sketcher-{run-type}-{timestamp}.log
 ```
@@ -16,8 +16,10 @@ For example:
 
 At the end of each run, sketcher will print the log file path:
 ```
-Log file: /tmp/sketcher-xyz123/sketcher-demo-20260812-143022.log
+Log file: /tmp/sk-logs/sketcher-demo-20260812-143022.log
 ```
+
+**Note**: Logs are stored separately from work directories to prevent deletion during cleanup. This means logs persist across multiple runs and are not removed when demo work directories are cleaned up.
 
 ## Log Format
 
@@ -31,16 +33,53 @@ Each log entry includes:
 ### Entry Types
 
 #### `info`
-General information about the run:
+General information about the run. The first two entries are always:
+
+**First entry - Environment information:**
 ```json
 {
   "timestamp": "2026-08-12T14:30:22Z",
   "type": "info",
-  "message": "Run started",
+  "message": "Environment",
+  "context": {
+    "sketcher_version": "0.2.0",
+    "os": "linux",
+    "arch": "amd64",
+    "go_version": "go1.21.5",
+    "num_cpu": 8,
+    "hostname": "myhost",
+    "user": "developer",
+    "home_dir": "/home/developer",
+    "cwd": "/home/developer/projects/my-demo",
+    "kubeconfig_path": "/home/developer/.kube/config",
+    "k8s_context": "minikube",
+    "minikube_status": "Running",
+    "minikube_profile": "skewer",
+    "skupper_path": "/usr/local/bin/skupper",
+    "skupper_version": "1.8.0",
+    "kubectl_path": "/usr/bin/kubectl",
+    "kubectl_version": "v1.28.3",
+    "docker_path": "/usr/bin/docker",
+    "docker_version": "24.0.7",
+    "skewer_path": "/usr/local/bin/skewer",
+    "skewer_version": "1.4.0"
+  }
+}
+```
+
+**Second entry - Execution context:**
+```json
+{
+  "timestamp": "2026-08-12T14:30:22Z",
+  "type": "info",
+  "message": "Execution context",
   "context": {
     "run_type": "demo",
+    "exec_mode": "minikube",
     "yaml_file": "skewer.yaml",
-    "work_dir": "/tmp/sketcher-xyz123"
+    "work_dir": "/tmp/sketcher",
+    "log_dir": "/tmp/sk-logs",
+    "log_file": "/tmp/sk-logs/skewer-20260812-143022.log"
   }
 }
 ```
@@ -194,9 +233,23 @@ jq -r 'select(.type == "wait") | "\(.wait_type) \(.wait_target) (timeout: \(.wai
 
 ## Log Retention
 
-Logs are stored in the work directory:
-- For `demo` mode: Logs persist in the work directory until you run `sketcher clean` or delete manually
-- For `test` mode: Logs persist in the temporary work directory (usually `/tmp/sketcher-*`)
-- For `run` mode: Logs persist in the specified or temporary work directory
+Logs are stored in `/tmp/sk-logs/`:
+- **All modes** (demo/test/run): Logs persist in `/tmp/sk-logs/` and are never automatically deleted
+- Logs survive work directory cleanup (when starting new demos)
+- Logs are only removed when `/tmp` is cleaned by the OS (typically on reboot)
+- Multiple runs accumulate logs in the same directory
 
-To preserve logs from temporary directories, copy them before the work directory is cleaned up.
+To clean up old logs:
+```bash
+# Use sketcher's built-in clean command
+sketcher clean --logs
+
+# Or manually remove specific logs
+rm /tmp/sk-logs/*.log
+
+# Remove logs older than 7 days
+find /tmp/sk-logs -name "*.log" -mtime +7 -delete
+
+# Remove logs from a specific run type
+rm /tmp/sk-logs/sketcher-demo-*.log
+```

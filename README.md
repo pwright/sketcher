@@ -721,19 +721,19 @@ The provided kubeconfigs override the paths in `skewer.yaml` at runtime — the 
 
 ### Viewing Execution Logs
 
-Every `sketcher demo`, `test`, and `run` execution automatically generates a detailed log file. The log path is printed at the end of each run:
+Every `sketcher demo`, `test`, and `run` execution automatically generates a detailed log file in `/tmp/sk-logs/`. The log path is printed at the end of each run:
 
 ```
-Log file: /tmp/sketcher-xyz123/sketcher-demo-20260812-143022.log
+Log file: /tmp/sk-logs/sketcher-demo-20260812-143022.log
 ```
 
 View logs in human-readable format:
 
 ```bash
-sketcher view-log /tmp/sketcher-xyz123/sketcher-demo-20260812-143022.log
+sketcher view-log /tmp/sk-logs/sketcher-demo-20260812-143022.log
 ```
 
-The log includes every step, command, wait operation, and error with timestamps and context. See [docs/logging.md](docs/logging.md) for details on log format and debugging workflows.
+The log includes every step, command, wait operation, and error with timestamps and context. Logs persist across runs and are not deleted during cleanup. See [docs/logging.md](docs/logging.md) for details on log format and debugging workflows.
 
 ### Subnet is already used
 

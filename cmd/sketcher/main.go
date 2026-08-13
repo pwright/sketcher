@@ -7,7 +7,7 @@ import (
 	"github.com/skupperproject/sketcher/internal/cli"
 )
 
-const version = "0.2.0"
+const version = "0.3.0"
 
 func main() {
 	if err := cli.Execute(version); err != nil {

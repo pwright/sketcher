@@ -294,7 +294,7 @@ steps:
     - run: kubectl port-forward deployment/frontend 9094:9093 > /dev/null &
       apply: test
     - await_port: 9094
-    - run: curl http://localhost:9094/api/health
+    - run: curl http://localhost:9094/api/health > /dev/null
       apply: test
 - name: cleaning_up
   title: Cleaning up

@@ -28,10 +28,11 @@ steps:
 
 ## Generated Log
 
-Running `sketcher demo skewer.yaml` generates a log like this:
+Running `sketcher demo skewer.yaml` generates a log in `/tmp/sk-logs/` like this:
 
 ```json
-{"timestamp":"2026-08-12T14:30:22Z","type":"info","message":"Run started","context":{"run_type":"demo","yaml_file":"skewer.yaml","work_dir":"/tmp/sketcher-xyz123"}}
+{"timestamp":"2026-08-12T14:30:22Z","type":"info","message":"Environment","context":{"arch":"amd64","docker_version":"24.0.7","go_version":"go1.21.5","hostname":"myhost","k8s_context":"minikube","minikube_status":"Running","os":"linux","skupper_version":"1.8.0"}}
+{"timestamp":"2026-08-12T14:30:22Z","type":"info","message":"Execution context","context":{"exec_mode":"minikube","run_type":"demo","work_dir":"/tmp/sketcher","yaml_file":"skewer.yaml"}}
 {"timestamp":"2026-08-12T14:30:23Z","type":"step","step_number":1,"step_name":"Deploy application"}
 {"timestamp":"2026-08-12T14:30:24Z","type":"command","site":"public","command":"kubectl create deployment hello --image=nginx","context":{"background":false}}
 {"timestamp":"2026-08-12T14:30:25Z","type":"wait","wait_type":"resource","wait_target":"deployment/hello","wait_timeout":300,"site":"public"}
@@ -46,12 +47,36 @@ Running `sketcher demo skewer.yaml` generates a log like this:
 ## Viewing the Log
 
 ```bash
-$ sketcher view-log /tmp/sketcher-xyz123/sketcher-demo-20260812-143022.log
+$ sketcher view-log /tmp/sk-logs/skewer-20260812-143022.log
 
-[14:30:22] INFO: Run started
+[14:30:22] INFO: Environment
+  sketcher_version: 0.2.0
+  os: linux
+  arch: amd64
+  go_version: go1.21.5
+  num_cpu: 8
+  hostname: myhost
+  user: developer
+  home_dir: /home/developer
+  cwd: /home/developer/projects/my-demo
+  kubeconfig_path: /home/developer/.kube/config
+  k8s_context: minikube
+  minikube_status: Running
+  minikube_profile: skewer
+  skupper_path: /usr/local/bin/skupper
+  skupper_version: 1.8.0
+  kubectl_path: /usr/bin/kubectl
+  kubectl_version: v1.28.3
+  docker_version: 24.0.7
+  skewer_version: 1.4.0
+
+[14:30:22] INFO: Execution context
   run_type: demo
+  exec_mode: minikube
   yaml_file: skewer.yaml
-  work_dir: /tmp/sketcher-xyz123
+  work_dir: /tmp/sketcher
+  log_dir: /tmp/sk-logs
+  log_file: /tmp/sk-logs/skewer-20260812-143022.log-xyz123
 
 [14:30:23] STEP 1: Deploy application
 ──────────────────────────────────
