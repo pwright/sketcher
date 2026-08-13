@@ -9,10 +9,9 @@ __pycache__/
 .pytest_cache/
 
 # Go artifacts
-sketcher-bin
-sketcher-linux-x64
-sketcher-mac-arm64
-sketcher/main
+/sketcher
+sketcher-mac
+sketcher-linux
 !sketcher/  # Keep the Python package directory
 
 # Documentation
@@ -28,5 +27,4 @@ link.yaml
 *.tmp
 *.bak
 *~
-bin/
 *.log
