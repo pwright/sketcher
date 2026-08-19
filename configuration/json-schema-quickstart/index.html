@@ -2027,7 +2027,7 @@
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>python<span class="w"> </span>scripts/validate-schema.py<span class="w"> </span>examples/invalid-example.yaml
 </span></code></pre></div>
 <p>Output:
-<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>examples/invalid-example.yaml  ✗ Validation error at root: Additional properties are not allowed (&#39;extra_field&#39; was unexpected)
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>examples/invalid-example.yaml  ✗ Validation error at root: Additional properties are not allowed ('extra_field' was unexpected)
 </span></code></pre></div></p>
 <p><strong>What this prevents</strong>: Wasting time running clusters and tests only to discover a typo or missing field.</p>
 <hr />
@@ -2044,8 +2044,8 @@
 <h3 id="vs-code">VS Code<a class="headerlink" href="#vs-code" title="Permanent link">&para;</a></h3>
 <p>Create or update <code>.vscode/settings.json</code>:
 <div class="language-json highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">&quot;yaml.schemas&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nt">&quot;./skewer-schema.json&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;**/skewer.yaml&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;**/skewer-*.yaml&quot;</span><span class="p">]</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">"yaml.schemas"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nt">"./skewer-schema.json"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"**/skewer.yaml"</span><span class="p">,</span><span class="w"> </span><span class="s2">"**/skewer-*.yaml"</span><span class="p">]</span>
 </span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="p">}</span>
 </span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="p">}</span>
 </span></code></pre></div></p>
@@ -2063,7 +2063,7 @@
 </span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>just<span class="w"> </span>validate<span class="w"> </span>examples/*.yaml
 </span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>just<span class="w"> </span>validate-examples
 </span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>
-</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="c1"># Resolve then validate (for files with &#39;standard:&#39; references)</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="c1"># Resolve then validate (for files with 'standard:' references)</span>
 </span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>python<span class="w"> </span>-m<span class="w"> </span>sketcher<span class="w"> </span>resolve<span class="w"> </span>skewer.yaml<span class="w"> </span>-o<span class="w"> </span>skewer-resolved.yaml
 </span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>python<span class="w"> </span>scripts/validate-schema.py<span class="w"> </span>skewer-resolved.yaml
 </span></code></pre></div>
@@ -2088,7 +2088,7 @@
 <h2 id="common-validation-errors">Common Validation Errors<a class="headerlink" href="#common-validation-errors" title="Permanent link">&para;</a></h2>
 <h3 id="missing-required-field">Missing Required Field<a class="headerlink" href="#missing-required-field" title="Permanent link">&para;</a></h3>
 <p><strong>Error:</strong>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>✗ Validation error at root: &#39;title&#39; is a required property
+<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>✗ Validation error at root: 'title' is a required property
 </span></code></pre></div></p>
 <p><strong>Fix:</strong>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">My Example</span><span class="w">  </span><span class="c1"># Add missing title</span>
@@ -2097,7 +2097,7 @@
 </span></code></pre></div></p>
 <h3 id="invalid-platform">Invalid Platform<a class="headerlink" href="#invalid-platform" title="Permanent link">&para;</a></h3>
 <p><strong>Error:</strong>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>✗ Validation error at sites → west → platform: &#39;k8s&#39; is not one of [&#39;kubernetes&#39;, &#39;podman&#39;, &#39;docker&#39;, &#39;linux&#39;]
+<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>✗ Validation error at sites → west → platform: 'k8s' is not one of ['kubernetes', 'podman', 'docker', 'linux']
 </span></code></pre></div></p>
 <p><strong>Fix:</strong>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nt">sites</span><span class="p">:</span>
@@ -2106,7 +2106,7 @@
 </span></code></pre></div></p>
 <h3 id="unknown-field">Unknown Field<a class="headerlink" href="#unknown-field" title="Permanent link">&para;</a></h3>
 <p><strong>Error:</strong>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>✗ Validation error at root: Additional properties are not allowed (&#39;extra_field&#39; was unexpected)
+<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>✗ Validation error at root: Additional properties are not allowed ('extra_field' was unexpected)
 </span></code></pre></div></p>
 <p><strong>Fix:</strong>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">My Example</span>
@@ -2116,7 +2116,7 @@
 </span></code></pre></div></p>
 <h3 id="invalid-namespace">Invalid Namespace<a class="headerlink" href="#invalid-namespace" title="Permanent link">&para;</a></h3>
 <p><strong>Error:</strong>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>✗ Validation error at sites → west → namespace: &#39;MyNamespace&#39; does not match &#39;^[a-z0-9]([-a-z0-9]*[a-z0-9])?$&#39;
+<div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>✗ Validation error at sites → west → namespace: 'MyNamespace' does not match '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
 </span></code></pre></div></p>
 <p><strong>Fix:</strong>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nt">sites</span><span class="p">:</span>
@@ -2149,7 +2149,7 @@
 </span><span id="__span-17-7"><a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v3</span>
 </span><span id="__span-17-8"><a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-python@v4</span>
 </span><span id="__span-17-9"><a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="w">        </span><span class="nt">with</span><span class="p">:</span>
-</span><span id="__span-17-10"><a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="w">          </span><span class="nt">python-version</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;3.11&#39;</span>
+</span><span id="__span-17-10"><a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="w">          </span><span class="nt">python-version</span><span class="p">:</span><span class="w"> </span><span class="s">'3.11'</span>
 </span><span id="__span-17-11"><a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pip install jsonschema</span>
 </span><span id="__span-17-12"><a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python scripts/validate-schema.py skewer.yaml</span>
 </span></code></pre></div></p>
@@ -2167,7 +2167,7 @@
 <p><strong>Important:</strong> The schema validates <strong>resolved</strong> YAML only.</p>
 <p>If your <code>skewer.yaml</code> contains <code>standard:</code> references:
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="nt">steps</span><span class="p">:</span>
-</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">standard</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">platform/access_your_kubernetes_clusters</span><span class="w">  </span><span class="c1"># ❌ Won&#39;t validate</span>
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">standard</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">platform/access_your_kubernetes_clusters</span><span class="w">  </span><span class="c1"># ❌ Won't validate</span>
 </span></code></pre></div></p>
 <p>First resolve it:
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Resolve</span>

@@ -2,94 +2,102 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://pwright.github.io/sketcher/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
+    </url>
+    <url>
+         <loc>https://pwright.github.io/sketcher/agents/domain/</loc>
+         <lastmod>2026-08-19</lastmod>
+    </url>
+    <url>
+         <loc>https://pwright.github.io/sketcher/agents/issue-tracker/</loc>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/configuration/json-schema-quickstart/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/configuration/json-schema-summary/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/configuration/logging-example/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/configuration/logging-reference/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/configuration/logging/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/development/contributing/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/development/developer-guide/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/development/logging-implementation/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/development/schema/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/getting-started/installation/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/getting-started/quick-start/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/getting-started/try-sketcher/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/migration/compatibility/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/migration/from-skewer/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/troubleshooting/common-issues/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/troubleshooting/viewing-logs/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/user-guide/cluster-providers/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/user-guide/common-patterns/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/user-guide/demo-test-modes/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/user-guide/extending-demos/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/user-guide/use-cases/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
     <url>
          <loc>https://pwright.github.io/sketcher/user-guide/writing-skewer-yaml/</loc>
-         <lastmod>2026-08-13</lastmod>
+         <lastmod>2026-08-19</lastmod>
     </url>
 </urlset>

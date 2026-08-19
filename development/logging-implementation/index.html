@@ -2173,16 +2173,16 @@
 </span></code></pre></div>
 <h3 id="query-with-jq">Query with jq<a class="headerlink" href="#query-with-jq" title="Permanent link">&para;</a></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Extract all commands</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;select(.type == &quot;command&quot;) | .command&#39;</span><span class="w"> </span>log.json
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'select(.type == "command") | .command'</span><span class="w"> </span>log.json
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
 </span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Find errors</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>jq<span class="w"> </span><span class="s1">&#39;select(.type == &quot;error&quot;)&#39;</span><span class="w"> </span>log.json
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>jq<span class="w"> </span><span class="s1">'select(.type == "error")'</span><span class="w"> </span>log.json
 </span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
 </span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Get step timings</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;select(.type == &quot;step_complete&quot;) | &quot;\(.step_name): \(.duration)s&quot;&#39;</span><span class="w"> </span>log.json
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'select(.type == "step_complete") | "\(.step_name): \(.duration)s"'</span><span class="w"> </span>log.json
 </span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
 </span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="c1"># Find slow waits (&gt;30s would indicate actual waiting)</span>
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>jq<span class="w"> </span><span class="s1">&#39;select(.type == &quot;wait&quot; and .wait_timeout &gt; 30)&#39;</span><span class="w"> </span>log.json
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>jq<span class="w"> </span><span class="s1">'select(.type == "wait" and .wait_timeout &gt; 30)'</span><span class="w"> </span>log.json
 </span></code></pre></div>
 <h2 id="benefits">Benefits<a class="headerlink" href="#benefits" title="Permanent link">&para;</a></h2>
 <h3 id="for-debugging">For Debugging<a class="headerlink" href="#for-debugging" title="Permanent link">&para;</a></h3>
